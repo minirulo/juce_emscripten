@@ -35,7 +35,7 @@ public:
     //==============================================================================
     void initialise (const String& commandLine) override
     {
-        LookAndFeel::setDefaultLookAndFeel(new LookAndFeel_V3());
+        // LookAndFeel::setDefaultLookAndFeel(new LookAndFeel_V4());
 
         mainWindow = new MainWindow ("Untitled - " + getApplicationName());
     }
