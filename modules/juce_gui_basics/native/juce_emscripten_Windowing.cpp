@@ -40,6 +40,8 @@ void launchApp()
         exit (app->getApplicationReturnValue());
 
     jassert (MessageManager::getInstance()->isThisTheMessageThread());
+
+    MessageManager::getInstance()->runDispatchLoop();
 }
 
 #include <emscripten.h>

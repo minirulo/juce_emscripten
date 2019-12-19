@@ -24,6 +24,9 @@
 
 #include <emscripten.h>
 
+#include <deque>
+#include <mutex>
+
 namespace juce
 {
 
@@ -39,72 +42,50 @@ bool MessageManager::dispatchNextMessageOnSystemQueue (const bool returnIfNoPend
     return true;
 }
 
+std::deque<MessageManager::MessageBase*> messageQueue;
+std::mutex queueMtx;
+std::atomic<bool> quitPosted{false};
 
-extern "C" void deliverMessage(long value)
+extern "C" void deliverMessage(long value) {}
+
+void dispatchLoop()
 {
-  using namespace juce;
-  std::cout << "deliverMessage: " << value << std::endl;
-  JUCE_TRY
-  {
-    MessageManager::MessageBase* const message = (MessageManager::MessageBase*) (pointer_sized_uint) value;
-    std::cout << "deliverMessage-msg: " << message << "type: " << typeid(*message).name() << std::endl;
-    message->messageCallback();
-    message->decReferenceCount();
-  }
-  JUCE_CATCH_EXCEPTION
+    queueMtx.lock();
+    while (! messageQueue.empty())
+    {
+        MessageManager::MessageBase* message = messageQueue.front();
+        messageQueue.pop_front();
+        queueMtx.unlock();
+        std::cout << "dispatchLoop-msg: " << message <<
+                    "type: " << typeid(*message).name() << std::endl;
+        message->messageCallback();
+        message->decReferenceCount();
+        queueMtx.lock();
+    }
+    queueMtx.unlock();
+
+    if (quitPosted)
+    {
+        emscripten_cancel_main_loop();
+    }
 }
 
-//==============================================================================
 bool MessageManager::postMessageToSystemQueue (MessageManager::MessageBase* const message)
 {
-    std::cout << "MessageManager::postMessageToSystemQueue" << std::endl;
-
-    EM_ASM({
-      if( !window.messageHandlerInstalled ){
-        window.messageHandlerInstalled = true;
-
-        var deliverMessage = Module.cwrap('deliverMessage', 'void', ['number']);
-
-        var receiveMessage = function(event)
-        {
-          console.log('receiveMessage', event, typeof(event.data));
-          deliverMessage(event.data);
-        };
-
-        window.addEventListener('message', receiveMessage, false);
-      }
-    });
-
-    message->incReferenceCount();
-
-    EM_ASM_ARGS({
-      console.log('window.postMessage', $0);
-      window.postMessage($0, '*');
-    }, message);
-
-    //android.activity.callVoidMethod (JuceAppActivity.postMessage, (jlong) (pointer_sized_uint) message);
+    queueMtx.lock();
+    messageQueue.push_back(message);
+    message -> incReferenceCount();
+    queueMtx.unlock();
     return true;
 }
 
-/*JUCE_JNI_CALLBACK (JUCE_ANDROID_ACTIVITY_CLASSNAME, deliverMessage, void, (JNIEnv* env, jobject activity, jlong value))
-{
-    JUCE_TRY
-    {
-        MessageManager::MessageBase* const message = (MessageManager::MessageBase*) (pointer_sized_uint) value;
-        message->messageCallback();
-        message->decReferenceCount();
-    }
-    JUCE_CATCH_EXCEPTION
-}*/
-
-//==============================================================================
 void MessageManager::broadcastMessage (const String&)
 {
 }
 
 void MessageManager::runDispatchLoop()
 {
-  //emscripten_set_main_loop(oneIteration, 60, 1);
+    emscripten_set_main_loop(dispatchLoop, 0, 0);
 }
 
 void MessageManager::stopDispatchLoop()
@@ -113,14 +94,12 @@ void MessageManager::stopDispatchLoop()
     {
         QuitCallback() {}
 
-        void messageCallback() override
-        {
-            //android.activity.callVoidMethod (JuceAppActivity.finish);
-        }
+        void messageCallback() override { }
     };
 
     (new QuitCallback())->post();
     quitMessagePosted = true;
+    quitPosted = true;
 }
 
 }
