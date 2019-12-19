@@ -2,7 +2,7 @@
 
 <JUCERPROJECT id="JTaust" name="juce_emscripten" projectType="guiapp" version="1.0.0"
               bundleIdentifier="com.betabugs.juce_emscripten" includeBinaryInAppConfig="1"
-              jucerVersion="3.1.0">
+              jucerVersion="5.4.5">
   <MAINGROUP id="DkFPLK" name="juce_emscripten">
     <GROUP id="{B50B7E02-3CC6-FB0A-C458-D90EC7807242}" name="Source">
       <GROUP id="{BBF37D74-BDF0-4B61-30C3-14CE20039A8A}" name="UI">
@@ -39,5 +39,9 @@
     <MODULES id="juce_graphics" showAllCode="1" useLocalCopy="0"/>
     <MODULES id="juce_gui_basics" showAllCode="1" useLocalCopy="0"/>
   </MODULES>
-  <JUCEOPTIONS/>
+  <JUCEOPTIONS JUCE_USE_CURL="0" JUCE_USE_XRANDR="0" JUCE_USE_XINERAMA="0" JUCE_USE_XSHM="0"
+               JUCE_USE_XRENDER="0" JUCE_USE_XCURSOR="0"/>
+  <LIVE_SETTINGS>
+    <LINUX/>
+  </LIVE_SETTINGS>
 </JUCERPROJECT>

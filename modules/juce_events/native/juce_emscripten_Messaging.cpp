@@ -22,8 +22,6 @@
   ==============================================================================
 */
 
-}
-
 #include <emscripten.h>
 
 namespace juce
@@ -123,4 +121,6 @@ void MessageManager::stopDispatchLoop()
 
     (new QuitCallback())->post();
     quitMessagePosted = true;
+}
+
 }

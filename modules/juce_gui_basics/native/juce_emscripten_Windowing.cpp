@@ -22,8 +22,6 @@
   ==============================================================================
 */
 
-} // (juce namespace)
-
 extern juce::JUCEApplicationBase* juce_CreateApplication(); // (from START_JUCE_APPLICATION)
 
 //==============================================================================
@@ -396,7 +394,8 @@ extern "C" void juce_mouseCallback(EmscriptenComponentPeer* ptr, const char* typ
     }
     modsToSend = peer->currentModifiers;
 
-    peer->handleMouseEvent (0, pos, modsToSend, time);
+    peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
+      pos, modsToSend, MouseInputSource::invalidPressure, 0.0f, time);
 
     //peer->handleMouseEvent(0, peer->globalToLocal(Point<float>(x, y)), ModifierKeys(), 0);
     //peer->handleModifierKeysChange();
@@ -434,8 +433,13 @@ Desktop::DisplayOrientation Desktop::getCurrentOrientation() const
 
 bool MouseInputSource::SourceList::addSource()
 {
-    addSource (sources.size(), false);
+    addSource(sources.size(), MouseInputSource::InputSourceType::mouse);
     return true;
+}
+
+bool MouseInputSource::SourceList::canUseTouch()
+{
+    return false;
 }
 
 Point<float> MouseInputSource::getCurrentRawMousePosition()
@@ -456,16 +460,16 @@ bool KeyPress::isKeyCurrentlyDown (const int keyCode)
     return false;
 }
 
-void ModifierKeys::updateCurrentModifiers() noexcept
-{
-    //currentModifiers = EmscriptenComponentPeer::currentModifiers;
-}
+// void ModifierKeys::updateCurrentModifiers() noexcept
+// {
+//     //currentModifiers = EmscriptenComponentPeer::currentModifiers;
+// }
 
-ModifierKeys ModifierKeys::getCurrentModifiersRealtime() noexcept
-{
-    //return EmscriptenComponentPeer::currentModifiers;
-    return ModifierKeys();
-}
+// ModifierKeys ModifierKeys::getCurrentModifiersRealtime() noexcept
+// {
+//     //return EmscriptenComponentPeer::currentModifiers;
+//     return ModifierKeys();
+// }
 
 //==============================================================================
 // TODO
@@ -497,7 +501,7 @@ bool juce_areThereAnyAlwaysOnTopWindows()
 }
 
 //==============================================================================
-void Desktop::Displays::findDisplays (float masterScale)
+void Displays::findDisplays (float masterScale)
 {
     Display d;
     d.userArea = d.totalArea = Rectangle<int> (800, 600) / masterScale;
@@ -515,7 +519,7 @@ void Desktop::Displays::findDisplays (float masterScale)
 //==============================================================================
 Image juce_createIconForFile (const File& file)
 {
-    return Image::null;
+    return Image();
 }
 
 //==============================================================================
@@ -525,18 +529,6 @@ void MouseCursor::deleteMouseCursor (void* const /*cursorHandle*/, const bool /*
 
 //==============================================================================
 void MouseCursor::showInWindow (ComponentPeer*) const   {}
-void MouseCursor::showInAllWindows() const  {}
-
-//==============================================================================
-bool DragAndDropContainer::performExternalDragDropOfFiles (const StringArray& files, const bool canMove)
-{
-    return false;
-}
-
-bool DragAndDropContainer::performExternalDragDropOfText (const String& text)
-{
-    return false;
-}
 
 //==============================================================================
 void LookAndFeel::playAlertSound()
@@ -621,6 +613,25 @@ const int KeyPress::F13Key          = extendedKeyModifier + 23;
 const int KeyPress::F14Key          = extendedKeyModifier + 24;
 const int KeyPress::F15Key          = extendedKeyModifier + 25;
 const int KeyPress::F16Key          = extendedKeyModifier + 26;
+const int KeyPress::F17Key          = 0;
+const int KeyPress::F18Key          = 0;
+const int KeyPress::F19Key          = 0;
+const int KeyPress::F20Key          = 0;
+const int KeyPress::F21Key          = 0;
+const int KeyPress::F22Key          = 0;
+const int KeyPress::F23Key          = 0;
+const int KeyPress::F24Key          = 0;
+const int KeyPress::F25Key          = 0;
+const int KeyPress::F26Key          = 0;
+const int KeyPress::F27Key          = 0;
+const int KeyPress::F28Key          = 0;
+const int KeyPress::F29Key          = 0;
+const int KeyPress::F30Key          = 0;
+const int KeyPress::F31Key          = 0;
+const int KeyPress::F32Key          = 0;
+const int KeyPress::F33Key          = 0;
+const int KeyPress::F34Key          = 0;
+const int KeyPress::F35Key          = 0;
 const int KeyPress::numberPad0      = extendedKeyModifier + 27;
 const int KeyPress::numberPad1      = extendedKeyModifier + 28;
 const int KeyPress::numberPad2      = extendedKeyModifier + 29;
@@ -643,3 +654,5 @@ const int KeyPress::playKey         = extendedKeyModifier + 45;
 const int KeyPress::stopKey         = extendedKeyModifier + 46;
 const int KeyPress::fastForwardKey  = extendedKeyModifier + 47;
 const int KeyPress::rewindKey       = extendedKeyModifier + 48;
+
+}
