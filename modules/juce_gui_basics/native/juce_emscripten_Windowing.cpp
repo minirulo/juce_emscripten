@@ -69,7 +69,7 @@ class EmscriptenComponentPeer : public ComponentPeer
 
             EM_ASM_INT({
                 var canvas = document.createElement('canvas');
-                canvas.id  = Pointer_stringify($0);
+                canvas.id  = UTF8ToString($0);
                 canvas.style.zIndex   = $6;
                 console.log($6, canvas.style.zIndex);
                 canvas.style.position = "absolute";
@@ -118,7 +118,7 @@ class EmscriptenComponentPeer : public ComponentPeer
             EM_ASM_ARGS({
                 window.clearInterval($1);
 
-                var canvas = document.getElementById(Pointer_stringify($0));
+                var canvas = document.getElementById(UTF8ToString($0));
                 canvas.parentElement.removeChild(canvas);
             }, id.toRawUTF8(), timerId);
         }
@@ -141,7 +141,7 @@ class EmscriptenComponentPeer : public ComponentPeer
         virtual void setBounds (const Rectangle< int > &newBounds, bool isNowFullScreen) override
         {
             EM_ASM_ARGS({
-                var canvas = document.getElementById(Pointer_stringify($0));
+                var canvas = document.getElementById(UTF8ToString($0));
 
                 canvas.style.left = $1 + 'px';
                 canvas.style.top  = $2 + 'px';
@@ -187,7 +187,7 @@ class EmscriptenComponentPeer : public ComponentPeer
         virtual void setFullScreen (bool shouldBeFullScreen) override
         {
             EM_ASM_ARGS({
-                var canvas = document.getElementById(Pointer_stringify($0));
+                var canvas = document.getElementById(UTF8ToString($0));
                 canvas.style.left='0px';
                 canvas.style.top ='0px';
 
@@ -234,7 +234,7 @@ class EmscriptenComponentPeer : public ComponentPeer
             std::clog << "toFront " << id << " " << makeActive <<  std::endl;
 
             highestZIndex = EM_ASM_INT({
-                var canvas = document.getElementById(Pointer_stringify($0));
+                var canvas = document.getElementById(UTF8ToString($0));
                 canvas.style.zIndex = parseInt($1)+1;
                 console.log(canvas.style.zIndex, $1);
                 return parseInt(canvas.style.zIndex);
@@ -255,8 +255,8 @@ class EmscriptenComponentPeer : public ComponentPeer
             if(EmscriptenComponentPeer* otherPeer = dynamic_cast<EmscriptenComponentPeer*>(other))
             {
                 int newZIndex = EM_ASM_INT({
-                    var canvas = document.getElementById(Pointer_stringify($0));
-                    var other  = document.getElementById(Pointer_stringify($1));
+                    var canvas = document.getElementById(UTF8ToString($0));
+                    var other  = document.getElementById(UTF8ToString($1));
                     canvas.zIndex = parseInt(other.zIndex)-1;
                     return parseInt(other.zIndex);
                 }, id.toRawUTF8(), otherPeer->id.toRawUTF8());
@@ -318,7 +318,7 @@ class EmscriptenComponentPeer : public ComponentPeer
             Image::BitmapData bitmapData(temp, Image::BitmapData::readOnly);
 
             EM_ASM_ARGS({
-                var id = Pointer_stringify($0);
+                var id = UTF8ToString($0);
                 var pointer = $1;
                 var width   = $2;
                 var height  = $3;
@@ -566,7 +566,7 @@ void JUCE_CALLTYPE NativeMessageBox::showMessageBoxAsync (
     ModalComponentManager::Callback *callback)
 {
     EM_ASM_ARGS({
-        alert( Pointer_stringify($0) );
+        alert( UTF8ToString($0) );
     }, message.toRawUTF8());
 
     if(callback != nullptr) callback->modalStateFinished(1);
@@ -580,7 +580,7 @@ bool JUCE_CALLTYPE NativeMessageBox::showOkCancelBox(
     ModalComponentManager::Callback *callback)
 {
     int result = EM_ASM_ARGS({
-        return window.confirm( Pointer_stringify($0) );
+        return window.confirm( UTF8ToString($0) );
     }, message.toRawUTF8());
     if(callback != nullptr) callback->modalStateFinished(result?1:0);
 

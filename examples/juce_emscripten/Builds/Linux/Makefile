@@ -23,7 +23,7 @@ ifeq ($(CONFIG),Debug)
   CPPFLAGS := $(DEPFLAGS) -D "JUCER_LINUX_MAKE_7346DA2A=1" -D "JUCE_APP_VERSION=1.0.0" -D "JUCE_APP_VERSION_HEX=0x10000" -I /usr/include/freetype2 -I ../../JuceLibraryCode -I ../../../modules -I ../../compat -I /usr/X11R6/include/
   CFLAGS += $(CPPFLAGS) $(TARGET_ARCH) -O0 -DJUCE_USE_FREETYPE=1 -DJUCE_USE_FREETYPE_AMALGAMATED=1 -DFT_DEBUG_LEVEL_TRACE=1 -D_NL_IDENTIFICATION_LANGUAGE=0 -D_NL_IDENTIFICATION_TERRITORY=0
   CXXFLAGS += $(CFLAGS) -std=c++11
-  LDFLAGS += -s TOTAL_MEMORY=536870912 --preload-file usr/X11R6/lib/X11/fonts/Lato-Regular.ttf --preload-file usr/X11R6/lib/X11/fonts/Lato-Bold.ttf -s EXPORTED_FUNCTIONS="['_main', '_deliverMessage', '_repaintPeer', '_doThreadIteration', '_juce_mouseCallback']" -s NO_EXIT_RUNTIME=1 $(TARGET_ARCH) -L$(BINDIR) -L$(LIBDIR) -fvisibility=hidden -lX11 -lXext -lXinerama -ldl -lfreetype -lpthread -lrt 
+  LDFLAGS += -s TOTAL_MEMORY=536870912 --preload-file usr/X11R6/lib/X11/fonts/Lato-Regular.ttf --preload-file usr/X11R6/lib/X11/fonts/Lato-Bold.ttf -s EXPORTED_FUNCTIONS="['_main', '_deliverMessage', '_repaintPeer', '_doThreadIteration', '_juce_mouseCallback']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" -s NO_EXIT_RUNTIME=1 $(TARGET_ARCH) -L$(BINDIR) -L$(LIBDIR) -fvisibility=hidden -lX11 -ldl -lpthread -lrt 
   LDDEPS :=
   RESFLAGS :=  -D "LINUX=1" -D "JUCER_LINUX_MAKE_7346DA2A=1" -D "JUCE_APP_VERSION=1.0.0" -D "JUCE_APP_VERSION_HEX=0x10000" -I /usr/include -I /usr/include/freetype2 -I ../../JuceLibraryCode -I ../../modules -I ../../compat -I /usr/X11R6/include/
   TARGET := index.html

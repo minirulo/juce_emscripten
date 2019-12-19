@@ -99,6 +99,7 @@
  
  #if JUCE_EMSCRIPTEN
   #include <signal.h>
+  #include <unistd.h>
  #endif
 #endif
 
