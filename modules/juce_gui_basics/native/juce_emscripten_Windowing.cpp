@@ -51,7 +51,7 @@ namespace juce
 
 class EmscriptenComponentPeer : public ComponentPeer
 {
-    Rectangle< int > bounds;
+    Rectangle<int> bounds;
     String id;
     long timerId;
     static int highestZIndex;
@@ -140,6 +140,8 @@ class EmscriptenComponentPeer : public ComponentPeer
 
         virtual void setBounds (const Rectangle< int > &newBounds, bool isNowFullScreen) override
         {
+            std::cout << "setBounds " << newBounds.getX() << " " << newBounds.getY() << " "
+                      << newBounds.getWidth() << " " << newBounds.getHeight() << std::endl;
             EM_ASM_ARGS({
                 var canvas = document.getElementById(UTF8ToString($0));
 
@@ -376,11 +378,13 @@ class EmscriptenComponentPeer : public ComponentPeer
 };
 
 int EmscriptenComponentPeer::highestZIndex = 10;
+Point<int> recentMousePosition;
 
 extern "C" void juce_mouseCallback(EmscriptenComponentPeer* ptr, const char* type, int x, int y)
 {
-    //std::clog << ptr << " " << type << " " << x << " " << y << std::endl;
+    // std::clog << ptr << " " << type << " " << x << " " << y << std::endl;
     EmscriptenComponentPeer* peer = (EmscriptenComponentPeer*) (pointer_sized_uint) ptr;
+    recentMousePosition = {x, y};
 
     Point<float> pos = peer->globalToLocal(Point<float>(x, y));
     int64 time = 0;
@@ -446,8 +450,7 @@ bool MouseInputSource::SourceList::canUseTouch()
 
 Point<float> MouseInputSource::getCurrentRawMousePosition()
 {
-    //return EmscriptenComponentPeer::lastMousePos;
-    return Point<float>();
+    return recentMousePosition.toFloat();
 }
 
 void MouseInputSource::setRawMousePosition (Point<float>)
