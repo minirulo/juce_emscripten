@@ -58,24 +58,36 @@ EM_JS(void, attachMouseCallbackToWindow, (),
 {
     if (window.juce_mouseCallback) return;
 
-    // event name, x, y, which button
+    // event name, x, y, which button, shift, ctrl, alt
     window.juce_mouseCallback = Module.cwrap(
-        'juce_mouseCallback', 'void', ['string', 'number', 'number', 'number']);
+        'juce_mouseCallback', 'void', ['string', 'number', 'number', 'number',
+        'number', 'number', 'number']);
     
     window.onmousedown  = function(e) {
-        window.juce_mouseCallback('down' , e.pageX, e.pageY, e.which); };
+        window.juce_mouseCallback('down' ,
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
     window.onmouseup    = function(e) { 
-        window.juce_mouseCallback('up'   , e.pageX, e.pageY, e.which); };
+        window.juce_mouseCallback('up'   ,
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
     window.onmousewheel = function(e) { 
-        window.juce_mouseCallback('wheel', e.wheelDeltaX, e.wheelDeltaY, e.which); };
-
+        window.juce_mouseCallback('wheel',
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
     window.onmouseenter = function(e) { 
-        window.juce_mouseCallback('enter', e.pageX, e.pageY, e.which); };
+        window.juce_mouseCallback('enter',
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
     window.onmouseleave = function(e) { 
-        window.juce_mouseCallback('leave', e.pageX, e.pageY, e.which); };
-
+        window.juce_mouseCallback('leave',
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
     window.onmousemove  = function(e) { 
-        window.juce_mouseCallback('move' , e.pageX, e.pageY, e.which); };
+        window.juce_mouseCallback('move' ,
+            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+    };
+
     // window.onmouseout   = function(e) { 
     //     window.juce_mouseCallback('out'  , e.pageX, e.pageY, e.which); };
     // window.onmouseover  = function(e) { 
@@ -427,9 +439,11 @@ class EmscriptenComponentPeer : public ComponentPeer
 
 int EmscriptenComponentPeer::highestZIndex = 10;
 
-extern "C" void juce_mouseCallback(const char* type, int x, int y, int which)
+extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
+    int isShiftDown, int isCtrlDown, int isAltDown)
 {
-    std::clog << type << " " << x << " " << y << " " << which << std::endl;
+    std::clog << type << " " << x << " " << y << " " << which
+              << " " << isShiftDown << std::endl;
     recentMousePosition = {x, y};
 
     ModifierKeys& mods = ModifierKeys::currentModifiers;
@@ -449,6 +463,13 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y, int which)
     {
         mods = mods.withoutMouseButtons();
     }
+    
+    mods = isShiftDown ? mods.withFlags(ModifierKeys::shiftModifier)
+                       : mods.withoutFlags(ModifierKeys::shiftModifier);
+    mods = isCtrlDown  ? mods.withFlags(ModifierKeys::ctrlModifier)
+                       : mods.withoutFlags(ModifierKeys::ctrlModifier);
+    mods = isAltDown   ? mods.withFlags(ModifierKeys::altModifier)
+                       : mods.withoutFlags(ModifierKeys::altModifier);
     
     EmscriptenComponentPeer::ZIndexComparator comparator;
     emComponentPeerList.sort(comparator);
