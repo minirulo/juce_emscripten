@@ -1,19 +1,20 @@
 # PoC port of [JUCE](http://www.juce.com/) for the browser via emscripten
 
-[Demo](http://beschulz.github.io/juce_emscripten/)
-
+This port was originally created [here](https://github.com/beschulz/juce_emscripten) by @beschulz. This fork is an unofficial continuation of the attempt.
 
 ## What is working
-- basic GUI
-- basic mouse interaction
-- Font-Rendering (via freetype)
+- messaging
+- basic GUI with async repaints
+- mouse wheel, left/right/middle buttons, shift/ctrl/alt modifiers
+- keyboard events
+- clipboard
+- font rendering (via freetype)
 
+(note: as of late 2019, this fork only works on Chrome because it needs SharedArrayBuffer support)
 
 ## What is not working
-- keyboard input (simple to fix)
 - audio (I'd go for an OpenALAudioDevice implementation in C++, because emscripten apparently supports OpenAL (via the AudioAPI) )
-- threading (This one's a real problem)
-
+- threading (maybe it's working already, at least for the high resolution timer thread, but not thoroughly tested)
 
 ## Hacking
 
@@ -36,14 +37,13 @@ source ./emsdk_env.sh
 - compile the sample
 ```shell
 cd examples/juce_emscripten/Builds/Linux/
-CXX=em++ make CONFIG=Debug
+emmake make
 cd build
 python -m SimpleHTTPServer
 ```
 - [have a play](http://127.0.0.1:8000)
 
 Note: I had to modify the auto-generated Makefile to get everything to work. So be carefull when you modify and save the jucer project. In the long run, it would be nice to have a emscripten target inside the introjucer.
-
 
 ## Thoughts
 
