@@ -141,6 +141,7 @@ class EmscriptenComponentPeer : public ComponentPeer,
                 canvas.style.top  = $2;
                 canvas.width  = $3;
                 canvas.height = $4;
+                canvas.oncontextmenu = function(e) { e.preventDefault(); };
                 canvas.setAttribute('data-peer', $5);
                 document.body.appendChild(canvas);
             }, id.toRawUTF8(), bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), this, ++highestZIndex);
