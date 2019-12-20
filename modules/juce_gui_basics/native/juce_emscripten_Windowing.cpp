@@ -49,23 +49,56 @@ void launchApp()
 namespace juce
 {
 
+class EmscriptenComponentPeer;
+
+Point<int> recentMousePosition;
+Array<EmscriptenComponentPeer*> emComponentPeerList;
+
+EM_JS(void, attachMouseCallbackToWindow, (),
+{
+    if (window.juce_mouseCallback) return;
+
+    window.juce_mouseCallback = Module.cwrap(
+        'juce_mouseCallback', 'void', ['string', 'number', 'number']);
+    
+    window.onmousedown  = function(e) {
+        window.juce_mouseCallback('down' , e.pageX, e.pageY); };
+    window.onmouseenter = function(e) { 
+        window.juce_mouseCallback('enter', e.pageX, e.pageY); };
+    window.onmouseleave = function(e) { 
+        window.juce_mouseCallback('leave', e.pageX, e.pageY); };
+    window.onmousemove  = function(e) { 
+        window.juce_mouseCallback('move' , e.pageX, e.pageY); };
+    window.onmouseout   = function(e) { 
+        window.juce_mouseCallback('out'  , e.pageX, e.pageY); };
+    window.onmouseover  = function(e) { 
+        window.juce_mouseCallback('over' , e.pageX, e.pageY); };
+    window.onmouseup    = function(e) { 
+        window.juce_mouseCallback('up'   , e.pageX, e.pageY); };
+    window.onmousewheel = function(e) { 
+        window.juce_mouseCallback('wheel', e.wheelDeltaX, e.wheelDeltaY); };
+});
+
 class EmscriptenComponentPeer : public ComponentPeer
 {
     Rectangle<int> bounds;
     String id;
     long timerId;
     static int highestZIndex;
+    int zIndex{0};
 
     public:
-        //using ComponentPeer::ComponentPeer;
         EmscriptenComponentPeer(Component &component, int styleFlags)
         :ComponentPeer(component, styleFlags)
         {
+            emComponentPeerList.add(this);
             std::cout << "EmscriptenComponentPeer" << std::endl;
 
             id = Uuid().toDashedString();
 
             std::cout << "id is " << id << std::endl;
+
+            attachMouseCallbackToWindow();
 
             EM_ASM_INT({
                 var canvas = document.createElement('canvas');
@@ -78,23 +111,12 @@ class EmscriptenComponentPeer : public ComponentPeer
                 canvas.style.top  = $2;
                 canvas.width  = $3;
                 canvas.height = $4;
-
-                window.juce_mouseCallback = window.juce_mouse_callback || Module.cwrap('juce_mouseCallback', 'void', ['number', 'string', 'number', 'number']);
-
-                canvas.onmousedown  = function(e) { window.juce_mouseCallback($5, 'down' , e.pageX, e.pageY); };
-                canvas.onmouseenter = function(e) { window.juce_mouseCallback($5, 'enter', e.pageX, e.pageY); };
-                canvas.onmouseleave = function(e) { window.juce_mouseCallback($5, 'leave', e.pageX, e.pageY); };
-                canvas.onmousemove  = function(e) { window.juce_mouseCallback($5, 'move' , e.pageX, e.pageY); };
-                //canvas.onmouseout   = function(e) window.juce_mouseCallbackck($5, 'out'  , pageX.x, pageY.y); };
-                canvas.onmouseover  = function(e) { window.juce_mouseCallback($5, 'over' , e.pageX, e.pageY); };
-                canvas.onmouseup    = function(e) { window.juce_mouseCallback($5, 'up'   , e.pageX, e.pageY); };
-                canvas.onmousewheel = function(e) { window.juce_mouseCallback($5, 'wheel', e.wheelDeltaX, e.wheelDeltaY); };
-
                 canvas.setAttribute('data-peer', $5);
-
                 document.body.appendChild(canvas);
             }, id.toRawUTF8(), bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), this, ++highestZIndex);
-
+            
+            zIndex = highestZIndex;
+            
             timerId = EM_ASM_ARGS({
                 if(!window.repaintHandlerInstalled)
                 {
@@ -115,6 +137,7 @@ class EmscriptenComponentPeer : public ComponentPeer
 
         ~EmscriptenComponentPeer()
         {
+            emComponentPeerList.removeAllInstancesOf(this);
             EM_ASM_ARGS({
                 window.clearInterval($1);
 
@@ -122,6 +145,18 @@ class EmscriptenComponentPeer : public ComponentPeer
                 canvas.parentElement.removeChild(canvas);
             }, id.toRawUTF8(), timerId);
         }
+
+        int getZIndex () const { return zIndex; }
+
+        struct ZIndexComparator
+        {
+            int compareElements (const EmscriptenComponentPeer* first,
+                                 const EmscriptenComponentPeer* second) {
+                if(first -> getZIndex() < second -> getZIndex()) return -1;
+                if(first -> getZIndex() > second -> getZIndex()) return 1;
+                return 0;
+            }
+        };
 
         virtual void* getNativeHandle () const override
         {
@@ -242,12 +277,22 @@ class EmscriptenComponentPeer : public ComponentPeer
                 return parseInt(canvas.style.zIndex);
             }, id.toRawUTF8(), highestZIndex);
 
+            zIndex = highestZIndex;
+
             handleBroughtToFront();
 
             if(makeActive)
             {
                 grabFocus();
             }
+        }
+
+        void updateZIndex()
+        {
+            zIndex = EM_ASM_INT({
+                var canvas = document.getElementById(UTF8ToString($0));
+                return canvas.zIndex;
+            }, id.toRawUTF8());
         }
 
         virtual void toBehind (ComponentPeer *other) override
@@ -265,6 +310,8 @@ class EmscriptenComponentPeer : public ComponentPeer
 
                 highestZIndex = std::max(highestZIndex, newZIndex);
 
+                updateZIndex();
+                otherPeer->updateZIndex();
                 otherPeer->handleFocusGain();
             }
 
@@ -378,33 +425,39 @@ class EmscriptenComponentPeer : public ComponentPeer
 };
 
 int EmscriptenComponentPeer::highestZIndex = 10;
-Point<int> recentMousePosition;
 
-extern "C" void juce_mouseCallback(EmscriptenComponentPeer* ptr, const char* type, int x, int y)
+extern "C" void juce_mouseCallback(const char* type, int x, int y)
 {
-    // std::clog << ptr << " " << type << " " << x << " " << y << std::endl;
-    EmscriptenComponentPeer* peer = (EmscriptenComponentPeer*) (pointer_sized_uint) ptr;
+    std::clog << type << " " << x << " " << y << std::endl;
     recentMousePosition = {x, y};
+    
+    EmscriptenComponentPeer::ZIndexComparator comparator;
+    emComponentPeerList.sort(comparator);
 
-    Point<float> pos = peer->globalToLocal(Point<float>(x, y));
-    int64 time = 0;
-    ModifierKeys modsToSend = peer->currentModifiers;
-
-    if (type == std::string("down"))
+    for (int i = emComponentPeerList.size() - 1; i >= 0; i --)
     {
-        peer->currentModifiers = peer->currentModifiers.withoutMouseButtons().withFlags (ModifierKeys::leftButtonModifier);
-    }
-    else if (type == std::string("up"))
-    {
-        peer->currentModifiers = modsToSend.withoutMouseButtons();
-    }
-    modsToSend = peer->currentModifiers;
+        EmscriptenComponentPeer* peer = emComponentPeerList[i];
+        Point<float> pos = peer->globalToLocal(Point<float>(x, y));
+        int64 time = 0;
+        ModifierKeys modsToSend = peer->currentModifiers;
 
-    peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
-      pos, modsToSend, MouseInputSource::invalidPressure, 0.0f, time);
+        if (type == std::string("down"))
+        {
+            peer->currentModifiers = peer->currentModifiers.withoutMouseButtons().withFlags (ModifierKeys::leftButtonModifier);
+            std::clog << "DOWN" << std::endl;
+        }
+        else if (type == std::string("up"))
+        {
+            peer->currentModifiers = modsToSend.withoutMouseButtons();
+        }
+        modsToSend = peer->currentModifiers;
 
-    //peer->handleMouseEvent(0, peer->globalToLocal(Point<float>(x, y)), ModifierKeys(), 0);
-    //peer->handleModifierKeysChange();
+        peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
+            pos, modsToSend, MouseInputSource::invalidPressure, 0.0f, time);
+
+        //peer->handleMouseEvent(0, peer->globalToLocal(Point<float>(x, y)), ModifierKeys(), 0);
+        //peer->handleModifierKeysChange();
+    }
 }
 
 extern "C" void repaintPeer(long ptr)
