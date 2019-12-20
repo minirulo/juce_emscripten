@@ -58,34 +58,34 @@ EM_JS(void, attachEventCallbackToWindow, (),
 {
     if (window.juce_mouseCallback) return;
 
-    // event name, x, y, which button, shift, ctrl, alt
+    // event name, x, y, which button, shift, ctrl, alt, wheel delta
     window.juce_mouseCallback = Module.cwrap(
         'juce_mouseCallback', 'void', ['string', 'number', 'number', 'number',
-        'number', 'number', 'number']);
+        'number', 'number', 'number', 'number']);
     
     window.onmousedown  = function(e) {
         window.juce_mouseCallback('down' ,
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, 0);
     };
     window.onmouseup    = function(e) { 
         window.juce_mouseCallback('up'   ,
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, 0);
     };
     window.onmousewheel = function(e) { 
         window.juce_mouseCallback('wheel',
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, e.wheelDelta);
     };
     window.onmouseenter = function(e) { 
         window.juce_mouseCallback('enter',
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, 0);
     };
     window.onmouseleave = function(e) { 
         window.juce_mouseCallback('leave',
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, 0);
     };
     window.onmousemove  = function(e) { 
         window.juce_mouseCallback('move' ,
-            e.pageX, e.pageY, e.which, e.shiftKey, e.ctrlKey, e.altKey);
+            e.pageX, e.pageY, e.button, e.shiftKey, e.ctrlKey, e.altKey, 0);
     };
 
     // window.onmouseout   = function(e) { 
@@ -458,12 +458,13 @@ class EmscriptenComponentPeer : public ComponentPeer,
 };
 
 int EmscriptenComponentPeer::highestZIndex = 10;
+int64 fakeMouseEventTime = 0;
 
 extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
-    int isShiftDown, int isCtrlDown, int isAltDown)
+    int isShiftDown, int isCtrlDown, int isAltDown, int wheelDelta)
 {
     // std::clog << type << " " << x << " " << y << " " << which
-    //           << " " << isShiftDown << std::endl;
+    //           << " " << isShiftDown << " " << wheelDelta << std::endl;
     recentMousePosition = {x, y};
 
     ModifierKeys& mods = ModifierKeys::currentModifiers;
@@ -471,13 +472,12 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
     if (type == std::string("down"))
     {
         mods = mods.withoutMouseButtons();
-        if (which == 1)
+        if (which == 0 || which > 2)
             mods = mods.withFlags(ModifierKeys::leftButtonModifier);
-        else if (which == 2)
+        else if (which == 1)
             mods = mods.withFlags(ModifierKeys::middleButtonModifier);
-        else if (which == 3)
+        else if (which == 2)
             mods = mods.withFlags(ModifierKeys::rightButtonModifier);
-        std::cout << "DOWN" << std::endl;
     }
     else if (type == std::string("up"))
     {
@@ -498,10 +498,23 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
     {
         EmscriptenComponentPeer* peer = emComponentPeerList[i];
         Point<float> pos = peer->globalToLocal(Point<float>(x, y));
-        int64 time = 0;
 
-        peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
-            pos, mods, MouseInputSource::invalidPressure, 0.0f, time);
+        if (wheelDelta == 0)
+        {
+            peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
+                pos, mods, MouseInputSource::invalidPressure, 0.0f, fakeMouseEventTime);
+        } else
+        {
+            MouseWheelDetails wheelInfo;
+            wheelInfo.deltaX = 0.0f;
+            wheelInfo.deltaY = wheelDelta / 480.0f;
+            wheelInfo.isReversed = false;
+            wheelInfo.isSmooth = false;
+            wheelInfo.isInertial = false;
+            peer->handleMouseWheel(MouseInputSource::InputSourceType::mouse,
+                pos, fakeMouseEventTime, wheelInfo);
+        }
+        fakeMouseEventTime ++;
     }
 }
 
