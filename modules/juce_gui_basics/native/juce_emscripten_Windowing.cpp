@@ -112,6 +112,7 @@ class EmscriptenComponentPeer : public ComponentPeer,
     String id;
     static int highestZIndex;
     int zIndex{0};
+    bool focused{false};
 
     RectangleList<int> pendingRepaintAreas;
 
@@ -302,7 +303,7 @@ class EmscriptenComponentPeer : public ComponentPeer,
 
             handleBroughtToFront();
 
-            if(makeActive)
+            if (makeActive)
             {
                 grabFocus();
             }
@@ -333,16 +334,20 @@ class EmscriptenComponentPeer : public ComponentPeer,
 
                 updateZIndex();
                 otherPeer->updateZIndex();
-                otherPeer->handleFocusGain();
+                if (! otherPeer->isFocused())
+                {
+                    otherPeer->focused = true;
+                    otherPeer->handleFocusGain();
+                }
             }
 
-            if(focused)
+            if (focused)
+            {
+                focused = false;
                 handleFocusLoss();
-
-            focused=false;
+            }
         }
 
-        bool focused=false;
         virtual bool isFocused() const override
         {
             return focused;
@@ -351,9 +356,19 @@ class EmscriptenComponentPeer : public ComponentPeer,
         virtual void grabFocus() override
         {
             std::clog << "grabFocus " << id << std::endl;
-            if(!focused)
+            if (! focused)
+            {
+                for (auto* other : emComponentPeerList)
+                {
+                    if (other != this && other -> isFocused())
+                    {
+                        other -> focused = false;
+                        other -> handleFocusLoss();
+                    }
+                }
+                focused = true;
                 handleFocusGain();
-            focused=true;
+            }
         }
 
         virtual void textInputRequired(Point< int > position, TextInputTarget &) override
