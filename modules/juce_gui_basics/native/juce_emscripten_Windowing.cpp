@@ -54,7 +54,7 @@ class EmscriptenComponentPeer;
 Point<int> recentMousePosition;
 Array<EmscriptenComponentPeer*> emComponentPeerList;
 
-EM_JS(void, attachMouseCallbackToWindow, (),
+EM_JS(void, attachEventCallbackToWindow, (),
 {
     if (window.juce_mouseCallback) return;
 
@@ -92,6 +92,17 @@ EM_JS(void, attachMouseCallbackToWindow, (),
     //     window.juce_mouseCallback('out'  , e.pageX, e.pageY, e.which); };
     // window.onmouseover  = function(e) { 
     //     window.juce_mouseCallback('over' , e.pageX, e.pageY, e.which); };
+
+    // event name, key code, key
+    window.juce_keyboardCallback = Module.cwrap(
+        'juce_keyboardCallback', 'void', ['string', 'number', 'string']);
+    
+    window.addEventListener('keydown', function(e) {
+        window.juce_keyboardCallback('down', e.which || e.keyCode, e.key);
+    });
+    window.addEventListener('keyup', function(e) {
+        window.juce_keyboardCallback('up', e.which || e.keyCode, e.key);
+    });
 });
 
 class EmscriptenComponentPeer : public ComponentPeer,
@@ -117,7 +128,7 @@ class EmscriptenComponentPeer : public ComponentPeer,
 
             std::cout << "id is " << id << std::endl;
 
-            attachMouseCallbackToWindow();
+            attachEventCallbackToWindow();
 
             EM_ASM_INT({
                 var canvas = document.createElement('canvas');
@@ -494,6 +505,43 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
     }
 }
 
+extern "C" void juce_keyboardCallback(const char* type, int keyCode, const char * key)
+{
+    // std::cout << "key " << type << " " << keyCode << " " << key << std::endl;
+    bool isChar = strlen(key) == 1;
+    bool isDown = type == std::string("down");
+    juce_wchar keyChar = isChar ? (juce_wchar)key[0] : 0;
+
+    ModifierKeys& mods = ModifierKeys::currentModifiers;
+    auto changedModifier = ModifierKeys::noModifiers;
+    if (keyCode == 16)
+        changedModifier = ModifierKeys::shiftModifier;
+    else if (keyCode == 17)
+        changedModifier = ModifierKeys::ctrlModifier;
+    else if (keyCode == 18)
+        changedModifier = ModifierKeys::altModifier;
+    else if (keyCode == 91)
+        changedModifier = ModifierKeys::commandModifier;
+    
+    if (changedModifier != ModifierKeys::noModifiers)
+        mods = isDown ? mods.withFlags(changedModifier)
+                      : mods.withoutFlags(changedModifier);
+    
+    if ((keyChar >= 'a' && keyChar <= 'z') ||
+        (keyChar >= 'A' && keyChar <= 'Z'))
+        keyCode = keyChar;
+    
+    for (int i = emComponentPeerList.size() - 1; i >= 0; i --)
+    {
+        EmscriptenComponentPeer* peer = emComponentPeerList[i];
+        if (changedModifier != ModifierKeys::noModifiers)
+            peer->handleModifierKeysChange();
+        peer->handleKeyUpOrDown(isDown);
+        if (isDown)
+            peer->handleKeyPress(KeyPress(keyCode, mods, keyChar));
+    }
+}
+
 //==============================================================================
 ComponentPeer* Component::createNewPeer (int styleFlags, void*)
 {
@@ -660,56 +708,56 @@ bool JUCE_CALLTYPE NativeMessageBox::showOkCancelBox(
 //==============================================================================
 const int extendedKeyModifier       = 0x10000;
 
-const int KeyPress::spaceKey        = ' ';
-const int KeyPress::returnKey       = 66;
-const int KeyPress::escapeKey       = 4;
-const int KeyPress::backspaceKey    = 67;
-const int KeyPress::leftKey         = extendedKeyModifier + 1;
-const int KeyPress::rightKey        = extendedKeyModifier + 2;
-const int KeyPress::upKey           = extendedKeyModifier + 3;
-const int KeyPress::downKey         = extendedKeyModifier + 4;
-const int KeyPress::pageUpKey       = extendedKeyModifier + 5;
-const int KeyPress::pageDownKey     = extendedKeyModifier + 6;
-const int KeyPress::endKey          = extendedKeyModifier + 7;
-const int KeyPress::homeKey         = extendedKeyModifier + 8;
-const int KeyPress::deleteKey       = extendedKeyModifier + 9;
-const int KeyPress::insertKey       = -1;
-const int KeyPress::tabKey          = 61;
-const int KeyPress::F1Key           = extendedKeyModifier + 10;
-const int KeyPress::F2Key           = extendedKeyModifier + 11;
-const int KeyPress::F3Key           = extendedKeyModifier + 12;
-const int KeyPress::F4Key           = extendedKeyModifier + 13;
-const int KeyPress::F5Key           = extendedKeyModifier + 14;
-const int KeyPress::F6Key           = extendedKeyModifier + 16;
-const int KeyPress::F7Key           = extendedKeyModifier + 17;
-const int KeyPress::F8Key           = extendedKeyModifier + 18;
-const int KeyPress::F9Key           = extendedKeyModifier + 19;
-const int KeyPress::F10Key          = extendedKeyModifier + 20;
-const int KeyPress::F11Key          = extendedKeyModifier + 21;
-const int KeyPress::F12Key          = extendedKeyModifier + 22;
-const int KeyPress::F13Key          = extendedKeyModifier + 23;
-const int KeyPress::F14Key          = extendedKeyModifier + 24;
-const int KeyPress::F15Key          = extendedKeyModifier + 25;
-const int KeyPress::F16Key          = extendedKeyModifier + 26;
-const int KeyPress::F17Key          = 0;
-const int KeyPress::F18Key          = 0;
-const int KeyPress::F19Key          = 0;
-const int KeyPress::F20Key          = 0;
-const int KeyPress::F21Key          = 0;
-const int KeyPress::F22Key          = 0;
-const int KeyPress::F23Key          = 0;
-const int KeyPress::F24Key          = 0;
-const int KeyPress::F25Key          = 0;
-const int KeyPress::F26Key          = 0;
-const int KeyPress::F27Key          = 0;
-const int KeyPress::F28Key          = 0;
-const int KeyPress::F29Key          = 0;
-const int KeyPress::F30Key          = 0;
-const int KeyPress::F31Key          = 0;
-const int KeyPress::F32Key          = 0;
-const int KeyPress::F33Key          = 0;
-const int KeyPress::F34Key          = 0;
-const int KeyPress::F35Key          = 0;
+const int KeyPress::spaceKey        = 32;
+const int KeyPress::returnKey       = 13;
+const int KeyPress::escapeKey       = 27;
+const int KeyPress::backspaceKey    = 8;
+const int KeyPress::leftKey         = 37;
+const int KeyPress::rightKey        = 39;
+const int KeyPress::upKey           = 38;
+const int KeyPress::downKey         = 40;
+const int KeyPress::pageUpKey       = 33;
+const int KeyPress::pageDownKey     = 34;
+const int KeyPress::endKey          = 35;
+const int KeyPress::homeKey         = 36;
+const int KeyPress::deleteKey       = 46;
+const int KeyPress::insertKey       = 45;
+const int KeyPress::tabKey          = 9;
+const int KeyPress::F1Key           = 112;
+const int KeyPress::F2Key           = 113;
+const int KeyPress::F3Key           = 114;
+const int KeyPress::F4Key           = 115;
+const int KeyPress::F5Key           = 116;
+const int KeyPress::F6Key           = 117;
+const int KeyPress::F7Key           = 118;
+const int KeyPress::F8Key           = 119;
+const int KeyPress::F9Key           = 120;
+const int KeyPress::F10Key          = 121;
+const int KeyPress::F11Key          = 122;
+const int KeyPress::F12Key          = 123;
+const int KeyPress::F13Key          = extendedKeyModifier + 24;
+const int KeyPress::F14Key          = extendedKeyModifier + 25;
+const int KeyPress::F15Key          = extendedKeyModifier + 26;
+const int KeyPress::F16Key          = extendedKeyModifier + 27;
+const int KeyPress::F17Key          = extendedKeyModifier + 28;
+const int KeyPress::F18Key          = extendedKeyModifier + 29;
+const int KeyPress::F19Key          = extendedKeyModifier + 30;
+const int KeyPress::F20Key          = extendedKeyModifier + 31;
+const int KeyPress::F21Key          = extendedKeyModifier + 32;
+const int KeyPress::F22Key          = extendedKeyModifier + 33;
+const int KeyPress::F23Key          = extendedKeyModifier + 34;
+const int KeyPress::F24Key          = extendedKeyModifier + 35;
+const int KeyPress::F25Key          = extendedKeyModifier + 36;
+const int KeyPress::F26Key          = extendedKeyModifier + 37;
+const int KeyPress::F27Key          = extendedKeyModifier + 38;
+const int KeyPress::F28Key          = extendedKeyModifier + 39;
+const int KeyPress::F29Key          = extendedKeyModifier + 40;
+const int KeyPress::F30Key          = extendedKeyModifier + 41;
+const int KeyPress::F31Key          = extendedKeyModifier + 42;
+const int KeyPress::F32Key          = extendedKeyModifier + 43;
+const int KeyPress::F33Key          = extendedKeyModifier + 44;
+const int KeyPress::F34Key          = extendedKeyModifier + 45;
+const int KeyPress::F35Key          = extendedKeyModifier + 46;
 const int KeyPress::numberPad0      = extendedKeyModifier + 27;
 const int KeyPress::numberPad1      = extendedKeyModifier + 28;
 const int KeyPress::numberPad2      = extendedKeyModifier + 29;

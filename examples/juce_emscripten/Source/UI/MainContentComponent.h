@@ -67,6 +67,8 @@ private:
     ScopedPointer<TextButton> textButton2;
     Path internalPath1;
 
+    TextButton manualResizeButton{"Manual Resize"};
+
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainContentComponent)

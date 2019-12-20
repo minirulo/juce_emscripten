@@ -33,13 +33,13 @@ MainContentComponent::MainContentComponent ()
     textButton->addListener (this);
 
     addAndMakeVisible (textEditor = new TextEditor ("new text editor"));
-    textEditor->setMultiLine (false);
-    textEditor->setReturnKeyStartsNewLine (false);
+    textEditor->setMultiLine (true);
+    textEditor->setReturnKeyStartsNewLine (true);
     textEditor->setReadOnly (false);
     textEditor->setScrollbarsShown (true);
     textEditor->setCaretVisible (true);
     textEditor->setPopupMenuEnabled (true);
-    textEditor->setText ("");
+    textEditor->setText ("Some text\nLine 1\nLine 2\nLine 3\nAnd of course line 4.");
 
     addAndMakeVisible (slider = new Slider ("new slider"));
     slider->setRange (0, 10, 0);
@@ -59,6 +59,8 @@ MainContentComponent::MainContentComponent ()
     addAndMakeVisible (textButton2 = new TextButton ("new button"));
     textButton2->addListener (this);
 
+    addAndMakeVisible (manualResizeButton);
+    manualResizeButton.addListener(this);
 
     //[UserPreSize]
     //[/UserPreSize]
@@ -126,6 +128,8 @@ void MainContentComponent::resized()
     groupComponent->setBounds (16, 48, 200, 150);
     slider2->setBounds (240, 136, 87, 96);
     textButton2->setBounds (176, 16, 150, 24);
+    manualResizeButton.setBounds (240, 50, 150, 24);
+
     internalPath1.clear();
     internalPath1.startNewSubPath (87.0f, 229.0f);
     internalPath1.lineTo (117.0f, 279.0f);
@@ -153,6 +157,9 @@ void MainContentComponent::buttonClicked (Button* buttonThatWasClicked)
         //[UserButtonCode_textButton2] -- add your button handler code here..
         AlertWindow::showMessageBoxAsync(AlertWindow::InfoIcon, "title", "message");
         //[/UserButtonCode_textButton2]
+    }
+    else if (buttonThatWasClicked == & manualResizeButton) {
+        setSize (700, 500);
     }
 
     //[UserbuttonClicked_Post]
