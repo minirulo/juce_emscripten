@@ -46,8 +46,6 @@ std::deque<MessageManager::MessageBase*> messageQueue;
 std::mutex queueMtx;
 std::atomic<bool> quitPosted{false};
 
-extern "C" void deliverMessage(long value) {}
-
 void dispatchLoop()
 {
     queueMtx.lock();

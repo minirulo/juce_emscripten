@@ -98,7 +98,6 @@ class EmscriptenComponentPeer : public ComponentPeer
 {
     Rectangle<int> bounds;
     String id;
-    long timerId;
     static int highestZIndex;
     int zIndex{0};
 
@@ -131,18 +130,6 @@ class EmscriptenComponentPeer : public ComponentPeer
             }, id.toRawUTF8(), bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), this, ++highestZIndex);
             
             zIndex = highestZIndex;
-            
-            timerId = EM_ASM_ARGS({
-                if(!window.repaintHandlerInstalled)
-                {
-                    window.repaintHandlerInstalled=true;
-                    var repaintPeer = Module.cwrap('repaintPeer', 'void', ['number']);
-
-                    return window.setInterval(function(){
-                        repaintPeer($0);
-                    }, 1000);
-                }
-            }, this);
 
             grabFocus();
 
@@ -154,11 +141,9 @@ class EmscriptenComponentPeer : public ComponentPeer
         {
             emComponentPeerList.removeAllInstancesOf(this);
             EM_ASM_ARGS({
-                window.clearInterval($1);
-
                 var canvas = document.getElementById(UTF8ToString($0));
                 canvas.parentElement.removeChild(canvas);
-            }, id.toRawUTF8(), timerId);
+            }, id.toRawUTF8());
         }
 
         int getZIndex () const { return zIndex; }
@@ -484,13 +469,6 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
             pos, mods, MouseInputSource::invalidPressure, 0.0f, time);
     }
 }
-
-extern "C" void repaintPeer(long ptr)
-{
-    EmscriptenComponentPeer* peer = (EmscriptenComponentPeer*) (pointer_sized_uint) ptr;
-    peer->repaint(peer->getBounds());
-}
-
 
 //==============================================================================
 ComponentPeer* Component::createNewPeer (int styleFlags, void*)
