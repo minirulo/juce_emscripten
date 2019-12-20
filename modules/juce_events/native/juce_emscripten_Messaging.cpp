@@ -54,13 +54,22 @@ void dispatchLoop()
         MessageManager::MessageBase* message = messageQueue.front();
         messageQueue.pop_front();
         queueMtx.unlock();
-        std::cout << "dispatchLoop-msg: " << message <<
-                    "type: " << typeid(*message).name() << std::endl;
+        // std::cout << "dispatchLoop-msg: " << message <<
+        //             "type: " << typeid(*message).name() << std::endl;
         message->messageCallback();
         message->decReferenceCount();
         queueMtx.lock();
     }
     queueMtx.unlock();
+
+   #if DEBUG
+    EM_ASM({
+        var logArea = document.querySelector("#output");
+        var n = logArea.value.length;
+        if (n > 1000)
+            logArea.value = logArea.value.substring(n - 1000, n);
+    });
+   #endif
 
     if (quitPosted)
     {
