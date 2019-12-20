@@ -175,24 +175,28 @@ class EmscriptenComponentPeer : public ComponentPeer
 
         virtual void setBounds (const Rectangle< int > &newBounds, bool isNowFullScreen) override
         {
-            std::cout << "setBounds " << newBounds.getX() << " " << newBounds.getY() << " "
-                      << newBounds.getWidth() << " " << newBounds.getHeight() << std::endl;
+            std::cout << "setBounds " << newBounds.toString().toStdString() << std::endl;
+
+            auto oldBounds = bounds;
+            
             EM_ASM_ARGS({
                 var canvas = document.getElementById(UTF8ToString($0));
-
                 canvas.style.left = $1 + 'px';
                 canvas.style.top  = $2 + 'px';
                 if(canvas.width  != $3) canvas.width  = $3;
                 if(canvas.height != $4) canvas.height = $4;
             }, id.toRawUTF8(), newBounds.getX(), newBounds.getY(), newBounds.getWidth(), newBounds.getHeight());
-
-            //if(!newBounds.isEmpty() && (newBounds.getWidth() != bounds.getWidth() || newBounds.getHeight() != bounds.getHeight()))
-            //    repaint(newBounds.withZeroOrigin());
-
+            
             bounds = newBounds;
             fullscreen = isNowFullScreen;
 
             handleMovedOrResized();
+
+            if (! newBounds.isEmpty() &&
+                newBounds.withZeroOrigin() != oldBounds.withZeroOrigin())
+            {
+                repaint(newBounds.withZeroOrigin());
+            }
         }
 
         virtual Rectangle<int> getBounds () const override
@@ -340,14 +344,9 @@ class EmscriptenComponentPeer : public ComponentPeer
             std::cout << "textInputRequired" << std::endl;
         }
 
-
-        bool currentlyRepainting = false;
         virtual void repaint (const Rectangle< int > &area) override
         {
-            if(currentlyRepainting) return;
-            currentlyRepainting = true;
-
-            std::clog << "repaint: x=" << area.getX() << ", y=" << area.getY() << ", w=" << area.getWidth() << ", h=" << area.getHeight() << std::endl;
+            std::cout << "repaint: " << area.toString().toStdString() << std::endl;
 
             Image temp(Image::ARGB, area.getWidth(), area.getHeight(), true);
             LowLevelGraphicsSoftwareRenderer g(temp);
@@ -402,8 +401,6 @@ class EmscriptenComponentPeer : public ComponentPeer
                 delete tmp;
                 delete buffer;
             }, id.toRawUTF8(), bitmapData.getPixelPointer(0,0), temp.getWidth(), temp.getHeight(), area.getX(), area.getY());
-
-            currentlyRepainting=false;
         }
 
         virtual void performAnyPendingRepaintsNow() override
@@ -427,8 +424,8 @@ int EmscriptenComponentPeer::highestZIndex = 10;
 extern "C" void juce_mouseCallback(const char* type, int x, int y, int which,
     int isShiftDown, int isCtrlDown, int isAltDown)
 {
-    std::clog << type << " " << x << " " << y << " " << which
-              << " " << isShiftDown << std::endl;
+    // std::clog << type << " " << x << " " << y << " " << which
+    //           << " " << isShiftDown << std::endl;
     recentMousePosition = {x, y};
 
     ModifierKeys& mods = ModifierKeys::currentModifiers;
