@@ -58,25 +58,28 @@ EM_JS(void, attachMouseCallbackToWindow, (),
 {
     if (window.juce_mouseCallback) return;
 
+    // event name, x, y, which button
     window.juce_mouseCallback = Module.cwrap(
-        'juce_mouseCallback', 'void', ['string', 'number', 'number']);
+        'juce_mouseCallback', 'void', ['string', 'number', 'number', 'number']);
     
     window.onmousedown  = function(e) {
-        window.juce_mouseCallback('down' , e.pageX, e.pageY); };
-    window.onmouseenter = function(e) { 
-        window.juce_mouseCallback('enter', e.pageX, e.pageY); };
-    window.onmouseleave = function(e) { 
-        window.juce_mouseCallback('leave', e.pageX, e.pageY); };
-    window.onmousemove  = function(e) { 
-        window.juce_mouseCallback('move' , e.pageX, e.pageY); };
-    window.onmouseout   = function(e) { 
-        window.juce_mouseCallback('out'  , e.pageX, e.pageY); };
-    window.onmouseover  = function(e) { 
-        window.juce_mouseCallback('over' , e.pageX, e.pageY); };
+        window.juce_mouseCallback('down' , e.pageX, e.pageY, e.which); };
     window.onmouseup    = function(e) { 
-        window.juce_mouseCallback('up'   , e.pageX, e.pageY); };
+        window.juce_mouseCallback('up'   , e.pageX, e.pageY, e.which); };
     window.onmousewheel = function(e) { 
-        window.juce_mouseCallback('wheel', e.wheelDeltaX, e.wheelDeltaY); };
+        window.juce_mouseCallback('wheel', e.wheelDeltaX, e.wheelDeltaY, e.which); };
+
+    window.onmouseenter = function(e) { 
+        window.juce_mouseCallback('enter', e.pageX, e.pageY, e.which); };
+    window.onmouseleave = function(e) { 
+        window.juce_mouseCallback('leave', e.pageX, e.pageY, e.which); };
+
+    window.onmousemove  = function(e) { 
+        window.juce_mouseCallback('move' , e.pageX, e.pageY, e.which); };
+    // window.onmouseout   = function(e) { 
+    //     window.juce_mouseCallback('out'  , e.pageX, e.pageY, e.which); };
+    // window.onmouseover  = function(e) { 
+    //     window.juce_mouseCallback('over' , e.pageX, e.pageY, e.which); };
 });
 
 class EmscriptenComponentPeer : public ComponentPeer
@@ -420,16 +423,32 @@ class EmscriptenComponentPeer : public ComponentPeer
         {
             return StringArray();
         }
-
-        ModifierKeys currentModifiers;
 };
 
 int EmscriptenComponentPeer::highestZIndex = 10;
 
-extern "C" void juce_mouseCallback(const char* type, int x, int y)
+extern "C" void juce_mouseCallback(const char* type, int x, int y, int which)
 {
-    std::clog << type << " " << x << " " << y << std::endl;
+    std::clog << type << " " << x << " " << y << " " << which << std::endl;
     recentMousePosition = {x, y};
+
+    ModifierKeys& mods = ModifierKeys::currentModifiers;
+
+    if (type == std::string("down"))
+    {
+        mods = mods.withoutMouseButtons();
+        if (which == 1)
+            mods = mods.withFlags(ModifierKeys::leftButtonModifier);
+        else if (which == 2)
+            mods = mods.withFlags(ModifierKeys::middleButtonModifier);
+        else if (which == 3)
+            mods = mods.withFlags(ModifierKeys::rightButtonModifier);
+        std::cout << "DOWN" << std::endl;
+    }
+    else if (type == std::string("up"))
+    {
+        mods = mods.withoutMouseButtons();
+    }
     
     EmscriptenComponentPeer::ZIndexComparator comparator;
     emComponentPeerList.sort(comparator);
@@ -439,24 +458,9 @@ extern "C" void juce_mouseCallback(const char* type, int x, int y)
         EmscriptenComponentPeer* peer = emComponentPeerList[i];
         Point<float> pos = peer->globalToLocal(Point<float>(x, y));
         int64 time = 0;
-        ModifierKeys modsToSend = peer->currentModifiers;
-
-        if (type == std::string("down"))
-        {
-            peer->currentModifiers = peer->currentModifiers.withoutMouseButtons().withFlags (ModifierKeys::leftButtonModifier);
-            std::clog << "DOWN" << std::endl;
-        }
-        else if (type == std::string("up"))
-        {
-            peer->currentModifiers = modsToSend.withoutMouseButtons();
-        }
-        modsToSend = peer->currentModifiers;
 
         peer->handleMouseEvent(MouseInputSource::InputSourceType::mouse,
-            pos, modsToSend, MouseInputSource::invalidPressure, 0.0f, time);
-
-        //peer->handleMouseEvent(0, peer->globalToLocal(Point<float>(x, y)), ModifierKeys(), 0);
-        //peer->handleModifierKeysChange();
+            pos, mods, MouseInputSource::invalidPressure, 0.0f, time);
     }
 }
 
@@ -517,17 +521,6 @@ bool KeyPress::isKeyCurrentlyDown (const int keyCode)
     // TODO
     return false;
 }
-
-// void ModifierKeys::updateCurrentModifiers() noexcept
-// {
-//     //currentModifiers = EmscriptenComponentPeer::currentModifiers;
-// }
-
-// ModifierKeys ModifierKeys::getCurrentModifiersRealtime() noexcept
-// {
-//     //return EmscriptenComponentPeer::currentModifiers;
-//     return ModifierKeys();
-// }
 
 //==============================================================================
 // TODO
