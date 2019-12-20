@@ -94,12 +94,17 @@ EM_JS(void, attachMouseCallbackToWindow, (),
     //     window.juce_mouseCallback('over' , e.pageX, e.pageY, e.which); };
 });
 
-class EmscriptenComponentPeer : public ComponentPeer
+class EmscriptenComponentPeer : public ComponentPeer,
+                                public MessageListener
 {
     Rectangle<int> bounds;
     String id;
     static int highestZIndex;
     int zIndex{0};
+
+    RectangleList<int> pendingRepaintAreas;
+
+    struct RepaintMessage : public Message {};
 
     public:
         EmscriptenComponentPeer(Component &component, int styleFlags)
@@ -344,7 +349,43 @@ class EmscriptenComponentPeer : public ComponentPeer
             std::cout << "textInputRequired" << std::endl;
         }
 
-        virtual void repaint (const Rectangle< int > &area) override
+        virtual void repaint (const Rectangle<int>& area) override
+        {
+            pendingRepaintAreas.add(area);
+            postMessage(new RepaintMessage());
+        }
+
+        virtual void performAnyPendingRepaintsNow() override
+        {
+            std::cout << "performAnyPendingRepaintsNow" << std::endl;
+        }
+
+        virtual void setAlpha (float newAlpha) override
+        {
+            std::cout << "setAlpha" << std::endl;
+        }
+
+        virtual StringArray getAvailableRenderingEngines() override
+        {
+            return StringArray();
+        }
+
+    private:
+
+        void handleMessage (const Message& msg) override
+        {
+            if (dynamic_cast<const RepaintMessage*>(& msg))
+            {
+                for (int i = 0; i < pendingRepaintAreas.getNumRectangles(); i ++)
+                {
+                    Rectangle<int> area = pendingRepaintAreas.getRectangle(i);
+                    internalRepaint(area);
+                }
+                pendingRepaintAreas.clear();
+            }
+        }
+
+        void internalRepaint (const Rectangle<int> &area)
         {
             std::cout << "repaint: " << area.toString().toStdString() << std::endl;
 
@@ -403,20 +444,6 @@ class EmscriptenComponentPeer : public ComponentPeer
             }, id.toRawUTF8(), bitmapData.getPixelPointer(0,0), temp.getWidth(), temp.getHeight(), area.getX(), area.getY());
         }
 
-        virtual void performAnyPendingRepaintsNow() override
-        {
-            std::cout << "performAnyPendingRepaintsNow" << std::endl;
-        }
-
-        virtual void setAlpha (float newAlpha) override
-        {
-            std::cout << "setAlpha" << std::endl;
-        }
-
-        virtual StringArray getAvailableRenderingEngines() override
-        {
-            return StringArray();
-        }
 };
 
 int EmscriptenComponentPeer::highestZIndex = 10;
