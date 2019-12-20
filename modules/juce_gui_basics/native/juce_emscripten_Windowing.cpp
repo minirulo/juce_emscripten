@@ -103,6 +103,14 @@ EM_JS(void, attachEventCallbackToWindow, (),
     window.addEventListener('keyup', function(e) {
         window.juce_keyboardCallback('up', e.which || e.keyCode, e.key);
     });
+
+    window.juce_clipboard = "";
+
+    window.addEventListener('copy', function(e) {
+        navigator.clipboard.readText().then(function(text) {
+            window.juce_clipboard = text;
+        });
+    });
 });
 
 class EmscriptenComponentPeer : public ComponentPeer,
@@ -693,15 +701,47 @@ void LookAndFeel::playAlertSound()
 //==============================================================================
 void SystemClipboard::copyTextToClipboard (const String& text)
 {
-    //const LocalRef<jstring> t (javaString (text));
-    //android.activity.callVoidMethod (JuceAppActivity.setClipboardContent, t.get());
+    EM_ASM({
+        if (navigator.clipboard)
+        {   // async copy
+            navigator.clipboard.writeText(UTF8ToString($0));
+        } else
+        {   // fallback
+            var textArea = document.createElement("textarea");
+            textArea.value = UTF8ToString($0);
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+        }
+    }, text.toRawUTF8());
 }
+
+EM_JS(const char*, emscriptenGetClipboard, (), {
+    if (window.clipboardUpdater == undefined)
+    {
+        clipboardUpdater = function(e) {
+            navigator.clipboard.readText().then(function(text) {
+                window.juce_clipboard = text;
+            });
+        };
+        window.setInterval(clipboardUpdater, 200);
+    }
+    var data = window.juce_clipboard;
+    var dataLen = lengthBytesUTF8(data) + 1;
+    var dataOnWASMHeap = _malloc(dataLen);
+    stringToUTF8(data, dataOnWASMHeap, dataLen);
+    return dataOnWASMHeap;
+});
 
 String SystemClipboard::getTextFromClipboard()
 {
-    //const LocalRef<jstring> text ((jstring) android.activity.callObjectMethod (JuceAppActivity.getClipboardContent));
-    //return juceString (text);
-    return String();
+    const char* data = emscriptenGetClipboard();
+    String ret(data);
+    free((void*)data);
+    return ret;
 }
 
 // TODO: make async
