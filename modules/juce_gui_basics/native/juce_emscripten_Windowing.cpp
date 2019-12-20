@@ -509,17 +509,21 @@ bool juce_areThereAnyAlwaysOnTopWindows()
 void Displays::findDisplays (float masterScale)
 {
     Display d;
-    d.userArea = d.totalArea = Rectangle<int> (800, 600) / masterScale;
+    int width = EM_ASM_INT({
+        return document.documentElement.clientWidth;
+    });
+    int height = EM_ASM_INT({
+        return document.documentElement.scrollHeight;
+    });
+    
+    d.totalArea = (Rectangle<float>(width, height) / masterScale).toNearestIntEdges();
+    d.userArea = d.totalArea;
     d.isMain = true;
     d.scale = masterScale;
-    d.dpi = 70;//android.dpi;
+    d.dpi = 70;
 
-    displays.add (d);
+    displays.add(d);
 }
-
-
-
-
 
 //==============================================================================
 Image juce_createIconForFile (const File& file)
