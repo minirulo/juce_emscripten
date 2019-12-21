@@ -32,6 +32,7 @@
 //==============================================================================
 #if JUCE_WINDOWS || JUCE_LINUX || JUCE_MAC
  // Just add a simple icon to the Window system tray area or Mac menu bar..
+/*
  struct DemoTaskbarComponent  : public SystemTrayIconComponent,
                                 private Timer
  {
@@ -72,9 +73,10 @@
                           ModalCallbackFunction::forComponent (menuInvocationCallback, this));
      }
  };
+ */
 #endif
 
-std::unique_ptr<AudioDeviceManager> sharedAudioDeviceManager;
+// std::unique_ptr<AudioDeviceManager> sharedAudioDeviceManager;
 
 //==============================================================================
 class DemoRunnerApplication  : public JUCEApplication
@@ -85,7 +87,7 @@ public:
 
     ~DemoRunnerApplication() override
     {
-        sharedAudioDeviceManager.reset();
+        // sharedAudioDeviceManager.reset();
     }
 
     const String getApplicationName() override       { return ProjectInfo::projectName; }
@@ -142,7 +144,7 @@ private:
             setVisible (true);
 
            #if JUCE_WINDOWS || JUCE_LINUX || JUCE_MAC
-            taskbarIcon.reset (new DemoTaskbarComponent());
+            // taskbarIcon.reset (new DemoTaskbarComponent());
            #endif
         }
 

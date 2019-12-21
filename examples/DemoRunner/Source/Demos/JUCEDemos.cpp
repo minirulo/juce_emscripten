@@ -84,6 +84,7 @@ File JUCEDemos::findExamplesDirectoryFromExecutable (File exec)
     return {};
 }
 
+/*
 //==============================================================================
 static String getCurrentDefaultAudioDeviceName (AudioDeviceManager& deviceManager, bool isInput)
 {
@@ -168,7 +169,7 @@ AudioDeviceManager& getSharedAudioDeviceManager (int numInputChannels, int numOu
 
     return *sharedAudioDeviceManager;
 }
-
+*/
 //==============================================================================
 // need to split this into two files otherwise VS will fall over
 void registerDemos_One() noexcept;
