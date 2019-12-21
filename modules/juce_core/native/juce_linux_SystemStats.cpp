@@ -20,6 +20,9 @@
   ==============================================================================
 */
 
+#if JUCE_EMSCRIPTEN
+#include <emscripten.h>
+#endif
 
 namespace juce
 {
@@ -37,12 +40,16 @@ SystemStats::OperatingSystemType SystemStats::getOperatingSystemType()
 
 String SystemStats::getOperatingSystemName()
 {
+   #if JUCE_EMSCRIPTEN
+    return "Web Assembly";
+   #else
     return "Linux";
+   #endif
 }
 
 bool SystemStats::isOperatingSystem64Bit()
 {
-   #if JUCE_64BIT
+   #if JUCE_64BIT && ! JUCE_EMSCRIPTEN
     return true;
    #else
     //xxx not sure how to find this out?..
@@ -88,10 +95,20 @@ int SystemStats::getCpuSpeedInMegahertz()
 
 int SystemStats::getMemorySizeInMegabytes()
 {
+   #if JUCE_EMSCRIPTEN
+    int heapSizeLimit = EM_ASM_INT({
+        if (performance != undefined)
+            if (performance.memory != undefined)
+                return performance.memory.jsHeapSizeLimit / 1024 / 1024;
+        return 128; // some arbitrary number just to get things working (hopefully)
+    });
+    return heapSizeLimit;
+   #else
     struct sysinfo sysi;
 
     if (sysinfo (&sysi) == 0)
         return (int) (sysi.totalram * sysi.mem_unit / (1024 * 1024));
+   #endif
 
     return 0;
 }
