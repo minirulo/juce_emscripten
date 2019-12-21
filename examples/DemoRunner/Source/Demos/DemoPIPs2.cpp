@@ -42,7 +42,7 @@
 #endif
 #include "../../../GUI/ComponentDemo.h"
 #include "../../../GUI/ComponentTransformsDemo.h"
-// #include "../../../GUI/DialogsDemo.h"
+#include "../../../GUI/DialogsDemo.h"
 #include "../../../GUI/FlexBoxDemo.h"
 #include "../../../GUI/FontsDemo.h"
 #include "../../../GUI/GraphicsDemo.h"
@@ -81,7 +81,7 @@ void registerDemos_Two() noexcept
    #endif
     REGISTER_DEMO (ComponentDemo,             GUI, false)
     REGISTER_DEMO (ComponentTransformsDemo,   GUI, false)
-    // REGISTER_DEMO (DialogsDemo,               GUI, false)
+    REGISTER_DEMO (DialogsDemo,               GUI, false)
     REGISTER_DEMO (FlexBoxDemo,               GUI, false)
     REGISTER_DEMO (FontsDemo,                 GUI, false)
     REGISTER_DEMO (GraphicsDemo,              GUI, false)

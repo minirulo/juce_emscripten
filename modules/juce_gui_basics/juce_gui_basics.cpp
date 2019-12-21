@@ -331,5 +331,6 @@ namespace juce
 
 #elif JUCE_EMSCRIPTEN
  #include "native/juce_emscripten_Windowing.cpp"
+ #include "native/juce_emscripten_FileChooser.cpp"
 
 #endif
