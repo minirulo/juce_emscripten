@@ -40,8 +40,8 @@ ifeq ($(CONFIG),Debug)
   JUCE_TARGET_APP := DemoRunner.html
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -g4 -O0 $(CFLAGS)
-  JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s SAFE_HEAP=1 -s ASSERTIONS=1
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -lrt -ldl -lpthread $(LDFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s TOTAL_MEMORY=128MB -s NO_EXIT_RUNTIME -s EXPORTED_FUNCTIONS="['_main', '_juce_mouseCallback', '_juce_keyboardCallback']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" \
+  JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s SAFE_HEAP=1 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -lrt -ldl -lpthread $(LDFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s DISABLE_EXCEPTION_CATCHING=0 -s TOTAL_MEMORY=128MB -s NO_EXIT_RUNTIME -s EXPORTED_FUNCTIONS="['_main', '_juce_mouseCallback', '_juce_keyboardCallback']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" \
     --preload-file ../../../usr/X11R6/lib/X11/fonts/@/usr/X11R6/lib/X11/fonts/ \
 	--preload-file ../../../Assets@/examples/Assets --emrun
 
@@ -63,8 +63,8 @@ ifeq ($(CONFIG),Release)
   JUCE_TARGET_APP := DemoRunner.html
 
   JUCE_CFLAGS += $(JUCE_CPPFLAGS) $(TARGET_ARCH) -O3 $(CFLAGS)
-  JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1
-  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -lrt -ldl -lpthread $(LDFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s TOTAL_MEMORY=128MB -s NO_EXIT_RUNTIME -s EXPORTED_FUNCTIONS="['_main', '_juce_mouseCallback', '_juce_keyboardCallback']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" \
+  JUCE_CXXFLAGS += $(JUCE_CFLAGS) -std=c++14 $(CXXFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s DISABLE_EXCEPTION_CATCHING=0
+  JUCE_LDFLAGS += $(TARGET_ARCH) -L$(JUCE_BINDIR) -L$(JUCE_LIBDIR) -lrt -ldl -lpthread $(LDFLAGS) -s USE_PTHREADS=1 -s USE_FREETYPE=1 -s DISABLE_EXCEPTION_CATCHING=0 -s TOTAL_MEMORY=128MB -s NO_EXIT_RUNTIME -s EXPORTED_FUNCTIONS="['_main', '_juce_mouseCallback', '_juce_keyboardCallback']" -s EXTRA_EXPORTED_RUNTIME_METHODS="['cwrap']" \
     --preload-file ../../../usr/X11R6/lib/X11/fonts/@/usr/X11R6/lib/X11/fonts/ \
 	--preload-file ../../../Assets@/examples/Assets --emrun
 
@@ -84,6 +84,7 @@ OBJECTS_APP := \
   $(JUCE_OBJDIR)/include_juce_events_fd7d695.o \
   $(JUCE_OBJDIR)/include_juce_graphics_f817e147.o \
   $(JUCE_OBJDIR)/include_juce_gui_basics_e3f79785.o \
+  $(JUCE_OBJDIR)/include_juce_gui_extra_6dee1c1a.o \
 
 .PHONY: clean all strip
 
@@ -155,6 +156,11 @@ $(JUCE_OBJDIR)/include_juce_graphics_f817e147.o: ../../JuceLibraryCode/include_j
 $(JUCE_OBJDIR)/include_juce_gui_basics_e3f79785.o: ../../JuceLibraryCode/include_juce_gui_basics.cpp
 	-$(V_AT)mkdir -p $(JUCE_OBJDIR)
 	@echo "Compiling include_juce_gui_basics.cpp"
+	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
+
+$(JUCE_OBJDIR)/include_juce_gui_extra_6dee1c1a.o: ../../JuceLibraryCode/include_juce_gui_extra.cpp
+	-$(V_AT)mkdir -p $(JUCE_OBJDIR)
+	@echo "Compiling include_juce_gui_extra.cpp"
 	$(V_AT)$(CXX) $(JUCE_CXXFLAGS) $(JUCE_CPPFLAGS_APP) $(JUCE_CFLAGS_APP) -o "$@" -c "$<"
 
 clean:

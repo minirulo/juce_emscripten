@@ -43,6 +43,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_gui_basics" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </XCODE_MAC>
     <LINUX_MAKE targetFolder="Builds/LinuxMakefile" smallIcon="YyqWd2" bigIcon="YyqWd2">
@@ -57,6 +58,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </LINUX_MAKE>
     <ANDROIDSTUDIO targetFolder="Builds/Android" androidMinimumSDK="23" microphonePermissionNeeded="1"
@@ -75,6 +77,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </ANDROIDSTUDIO>
     <XCODE_IPHONE targetFolder="Builds/iOS" UISupportsDocumentBrowser="1" microphonePermissionNeeded="1"
@@ -92,6 +95,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </XCODE_IPHONE>
     <VS2015 targetFolder="Builds/VisualStudio2015" smallIcon="YyqWd2" bigIcon="YyqWd2"
@@ -107,6 +111,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </VS2015>
     <VS2017 targetFolder="Builds/VisualStudio2017" smallIcon="YyqWd2" bigIcon="YyqWd2"
@@ -122,6 +127,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </VS2017>
     <VS2019 targetFolder="Builds/VisualStudio2019" smallIcon="YyqWd2" bigIcon="YyqWd2"
@@ -137,6 +143,7 @@
         <MODULEPATH id="juce_data_structures" path="../../modules"/>
         <MODULEPATH id="juce_cryptography" path="../../modules"/>
         <MODULEPATH id="juce_core" path="../../modules"/>
+        <MODULEPATH id="juce_gui_extra" path="../../modules"/>
       </MODULEPATHS>
     </VS2019>
   </EXPORTFORMATS>
@@ -147,6 +154,7 @@
     <MODULE id="juce_events" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
   </MODULES>
   <JUCEOPTIONS JUCE_USE_CAMERA="1" JUCE_USE_MP3AUDIOFORMAT="1" JUCE_ALLOW_STATIC_NULL_VARIABLES="0"
                JUCE_STRICT_REFCOUNTEDPOINTER="1"/>

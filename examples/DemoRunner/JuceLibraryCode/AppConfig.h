@@ -56,6 +56,7 @@
 #define JUCE_MODULE_AVAILABLE_juce_events               1
 #define JUCE_MODULE_AVAILABLE_juce_graphics             1
 #define JUCE_MODULE_AVAILABLE_juce_gui_basics           1
+#define JUCE_MODULE_AVAILABLE_juce_gui_extra            1
 
 #define JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED 1
 
@@ -83,7 +84,7 @@
 #endif
 
 #ifndef    JUCE_USE_CURL
- //#define JUCE_USE_CURL 1
+ //#define JUCE_USE_CURL 0
 #endif
 
 #ifndef    JUCE_LOAD_CURL_SYMBOLS_LAZILY
@@ -153,6 +154,17 @@
 
 #ifndef    JUCE_WIN_PER_MONITOR_DPI_AWARE
  //#define JUCE_WIN_PER_MONITOR_DPI_AWARE 1
+#endif
+
+//==============================================================================
+// juce_gui_extra flags:
+
+#ifndef    JUCE_WEB_BROWSER
+ //#define JUCE_WEB_BROWSER 1
+#endif
+
+#ifndef    JUCE_ENABLE_LIVE_CONSTANT_EDITOR
+ //#define JUCE_ENABLE_LIVE_CONSTANT_EDITOR 0
 #endif
 
 //==============================================================================

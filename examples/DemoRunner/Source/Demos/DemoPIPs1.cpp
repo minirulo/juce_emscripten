@@ -67,8 +67,8 @@
  #include "../../../Utilities/ChildProcessDemo.h"
 #endif
 #include "../../../Utilities/CryptographyDemo.h"
-// #include "../../../Utilities/JavaScriptDemo.h"
-// #include "../../../Utilities/LiveConstantDemo.h"
+#include "../../../Utilities/JavaScriptDemo.h"
+#include "../../../Utilities/LiveConstantDemo.h"
 #include "../../../Utilities/MultithreadingDemo.h"
 // #include "../../../Utilities/NetworkingDemo.h"
 // #include "../../../Utilities/OSCDemo.h"
@@ -76,7 +76,7 @@
 #include "../../../Utilities/TimersAndEventsDemo.h"
 #include "../../../Utilities/UnitTestsDemo.h"
 #include "../../../Utilities/ValueTreesDemo.h"
-// #include "../../../Utilities/XMLandJSONDemo.h"
+#include "../../../Utilities/XMLandJSONDemo.h"
 
 void registerDemos_One() noexcept
 {
@@ -114,8 +114,8 @@ void registerDemos_One() noexcept
     REGISTER_DEMO (ChildProcessDemo,        Utilities, false)
    #endif
     REGISTER_DEMO (CryptographyDemo,        Utilities, false)
-    // REGISTER_DEMO (JavaScriptDemo,          Utilities, false)
-    // REGISTER_DEMO (LiveConstantDemo,        Utilities, false)
+    REGISTER_DEMO (JavaScriptDemo,          Utilities, false)
+    REGISTER_DEMO (LiveConstantDemo,        Utilities, false)
     REGISTER_DEMO (MultithreadingDemo,      Utilities, false)
     // REGISTER_DEMO (NetworkingDemo,          Utilities, false)
     // REGISTER_DEMO (OSCDemo,                 Utilities, false)
@@ -123,7 +123,7 @@ void registerDemos_One() noexcept
     REGISTER_DEMO (TimersAndEventsDemo,     Utilities, false)
     REGISTER_DEMO (UnitTestsDemo,           Utilities, false)
     REGISTER_DEMO (ValueTreesDemo,          Utilities, false)
-    // REGISTER_DEMO (XMLandJSONDemo,          Utilities, false)
+    REGISTER_DEMO (XMLandJSONDemo,          Utilities, false)
 }
 
 Component* createIntroDemo()
