@@ -1120,6 +1120,9 @@ void* DynamicLibrary::getFunction (const String& functionName) noexcept
 //==============================================================================
 static inline String readPosixConfigFileValue (const char* file, const char* key)
 {
+   #if JUCE_EMSCRIPTEN
+    return {};
+   #else
     StringArray lines;
     File (file).readLines (lines);
 
@@ -1128,6 +1131,7 @@ static inline String readPosixConfigFileValue (const char* file, const char* key
             return lines[i].fromFirstOccurrenceOf (":", false, false).trim();
 
     return {};
+   #endif
 }
 
 
