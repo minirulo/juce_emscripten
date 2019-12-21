@@ -98,10 +98,10 @@ private:
             rendererLabel.setJustificationType (Justification::centredRight);
             rendererLabel.attachToComponent (&rendererSelector, true);
 
-            // audioSettings.reset (new AudioDeviceSelectorComponent (getSharedAudioDeviceManager(),
-            //                                                        0, 256, 0, 256, true, true, true, false));
-            // addAndMakeVisible (audioSettings.get());
-            // audioSettings->setItemHeight (itemHeight);
+            audioSettings.reset (new AudioDeviceSelectorComponent (getSharedAudioDeviceManager(),
+                                                                   0, 256, 0, 256, true, true, true, false));
+            addAndMakeVisible (audioSettings.get());
+            audioSettings->setItemHeight (itemHeight);
 
             setOpaque (true);
         }
@@ -133,7 +133,7 @@ private:
             audioTitleLabel.setBounds (bounds.removeFromTop (30));
             bounds.removeFromTop (space);
 
-            // audioSettings->setBounds (bounds);
+            audioSettings->setBounds (bounds);
         }
 
         //==============================================================================
@@ -156,7 +156,7 @@ private:
         StringArray lookAndFeelNames;
         OwnedArray<LookAndFeel> lookAndFeels;
 
-        // std::unique_ptr<AudioDeviceSelectorComponent> audioSettings;
+        std::unique_ptr<AudioDeviceSelectorComponent> audioSettings;
 
         //==============================================================================
         void refreshRenderingEngineSelector()

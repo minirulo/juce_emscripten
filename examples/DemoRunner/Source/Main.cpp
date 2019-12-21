@@ -76,7 +76,7 @@
  */
 #endif
 
-// std::unique_ptr<AudioDeviceManager> sharedAudioDeviceManager;
+std::unique_ptr<AudioDeviceManager> sharedAudioDeviceManager;
 
 //==============================================================================
 class DemoRunnerApplication  : public JUCEApplication
@@ -87,7 +87,7 @@ public:
 
     ~DemoRunnerApplication() override
     {
-        // sharedAudioDeviceManager.reset();
+        sharedAudioDeviceManager.reset();
     }
 
     const String getApplicationName() override       { return ProjectInfo::projectName; }
