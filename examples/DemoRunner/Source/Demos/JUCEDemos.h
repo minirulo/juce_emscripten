@@ -66,8 +66,8 @@ void registerAllDemos() noexcept;
 Component* createIntroDemo();
 bool isComponentIntroDemo (Component*) noexcept;
 
-// CodeEditorComponent::ColourScheme getDarkColourScheme();
-// CodeEditorComponent::ColourScheme getLightColourScheme();
+CodeEditorComponent::ColourScheme getDarkColourScheme();
+CodeEditorComponent::ColourScheme getLightColourScheme();
 
 //==============================================================================
 // extern std::unique_ptr<AudioDeviceManager> sharedAudioDeviceManager;

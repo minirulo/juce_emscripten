@@ -108,12 +108,12 @@ void registerDemos_Two() noexcept
     REGISTER_DEMO (WindowsDemo,               GUI, false)
 }
 
-// CodeEditorComponent::ColourScheme getDarkColourScheme()
-// {
-//     return getDarkCodeEditorColourScheme();
-// }
+CodeEditorComponent::ColourScheme getDarkColourScheme()
+{
+    return getDarkCodeEditorColourScheme();
+}
 
-// CodeEditorComponent::ColourScheme getLightColourScheme()
-// {
-//     return getLightCodeEditorColourScheme();
-// }
+CodeEditorComponent::ColourScheme getLightColourScheme()
+{
+    return getLightCodeEditorColourScheme();
+}

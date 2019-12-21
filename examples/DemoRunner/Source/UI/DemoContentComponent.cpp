@@ -63,40 +63,40 @@ struct CodeContent    : public Component
 {
     CodeContent()
     {
-        // addAndMakeVisible (codeEditor);
+        addAndMakeVisible (codeEditor);
 
-        // codeEditor.setReadOnly (true);
-        // codeEditor.setScrollbarThickness (8);
+        codeEditor.setReadOnly (true);
+        codeEditor.setScrollbarThickness (8);
 
         lookAndFeelChanged();
     }
 
     void resized() override
     {
-        // codeEditor.setBounds (getLocalBounds());
+        codeEditor.setBounds (getLocalBounds());
     }
 
     void setDefaultCodeContent()
     {
-        // document.replaceAllContent ("\n/*******************************************************************************\n"
-        //                             "          Select one of the demos from the side panel on the left to see\n"
-        //                             "            its code here and an instance running in the \"Demo\" tab!\n"
-        //                             "*******************************************************************************/\n");
+        document.replaceAllContent ("\n/*******************************************************************************\n"
+                                    "          Select one of the demos from the side panel on the left to see\n"
+                                    "            its code here and an instance running in the \"Demo\" tab!\n"
+                                    "*******************************************************************************/\n");
     }
 
     void lookAndFeelChanged() override
     {
-        // auto* v4 = dynamic_cast <LookAndFeel_V4*> (&Desktop::getInstance().getDefaultLookAndFeel());
+        auto* v4 = dynamic_cast <LookAndFeel_V4*> (&Desktop::getInstance().getDefaultLookAndFeel());
 
-        // if (v4 != nullptr && (v4->getCurrentColourScheme() != LookAndFeel_V4::getLightColourScheme()))
-        //     codeEditor.setColourScheme (getDarkColourScheme());
-        // else
-        //     codeEditor.setColourScheme (getLightColourScheme());
+        if (v4 != nullptr && (v4->getCurrentColourScheme() != LookAndFeel_V4::getLightColourScheme()))
+            codeEditor.setColourScheme (getDarkColourScheme());
+        else
+            codeEditor.setColourScheme (getLightColourScheme());
     }
 
-    // CodeDocument document;
-    // CPlusPlusCodeTokeniser cppTokensier;
-    // CodeEditorComponent codeEditor  { document, &cppTokensier };
+    CodeDocument document;
+    CPlusPlusCodeTokeniser cppTokensier;
+    CodeEditorComponent codeEditor  { document, &cppTokensier };
 };
 #endif
 
@@ -140,8 +140,8 @@ void DemoContentComponent::setDemo (const String& category, int selectedDemoInde
     auto demo = JUCEDemos::getCategory (category).demos[(size_t) selectedDemoIndex];
 
    #if ! (JUCE_ANDROID || JUCE_IOS)
-    // codeContent->document.replaceAllContent (trimPIP (demo.demoFile.loadFileAsString()));
-    // codeContent->codeEditor.scrollToLine (0);
+    codeContent->document.replaceAllContent (trimPIP (demo.demoFile.loadFileAsString()));
+    codeContent->codeEditor.scrollToLine (0);
    #endif
 
     auto* content = demo.callback();
