@@ -64,6 +64,8 @@ namespace juce
       @see jassert()
   */
   #define JUCE_BREAK_IN_DEBUGGER        { ::kill (0, SIGTRAP); }
+#elif JUCE_EMSCRIPTEN
+  #define JUCE_BREAK_IN_DEBUGGER        { }
 #elif JUCE_MSVC
   #ifndef __INTEL_COMPILER
     #pragma intrinsic (__debugbreak)
