@@ -28,19 +28,19 @@
 #include "../../../Assets/DemoUtilities.h"
 #include "JUCEDemos.h"
 
-// #include "../../../Assets/AudioLiveScrollingDisplay.h"
+#include "../../../Assets/AudioLiveScrollingDisplay.h"
 
 //==============================================================================
 #include "IntroScreen.h"
-// #include "../../../Audio/AudioAppDemo.h"
-// #include "../../../Audio/AudioLatencyDemo.h"
-// #include "../../../Audio/AudioPlaybackDemo.h"
-// #include "../../../Audio/AudioRecordingDemo.h"
-// #include "../../../Audio/AudioSettingsDemo.h"
-// #include "../../../Audio/AudioSynthesiserDemo.h"
-// #include "../../../Audio/MidiDemo.h"
-// #include "../../../Audio/MPEDemo.h"
-// #include "../../../Audio/PluckedStringsDemo.h"
+#include "../../../Audio/AudioAppDemo.h"
+#include "../../../Audio/AudioLatencyDemo.h"
+#include "../../../Audio/AudioPlaybackDemo.h"
+#include "../../../Audio/AudioRecordingDemo.h"
+#include "../../../Audio/AudioSettingsDemo.h"
+#include "../../../Audio/AudioSynthesiserDemo.h"
+#include "../../../Audio/MidiDemo.h"
+#include "../../../Audio/MPEDemo.h"
+#include "../../../Audio/PluckedStringsDemo.h"
 
 #if JUCE_HAS_CONSTEXPR
 //  #include "../../../Audio/SimpleFFTDemo.h"
@@ -80,15 +80,15 @@
 
 void registerDemos_One() noexcept
 {
-    // REGISTER_DEMO (AudioAppDemo,            Audio,     false)
-    // REGISTER_DEMO (AudioLatencyDemo,        Audio,     false)
-    // REGISTER_DEMO (AudioPlaybackDemo,       Audio,     false)
-    // REGISTER_DEMO (AudioRecordingDemo,      Audio,     false)
-    // REGISTER_DEMO (AudioSettingsDemo,       Audio,     false)
-    // REGISTER_DEMO (AudioSynthesiserDemo,    Audio,     false)
-    // REGISTER_DEMO (MidiDemo,                Audio,     false)
-    // REGISTER_DEMO (MPEDemo,                 Audio,     false)
-    // REGISTER_DEMO (PluckedStringsDemo,      Audio,     false)
+    REGISTER_DEMO (AudioAppDemo,            Audio,     false)
+    REGISTER_DEMO (AudioLatencyDemo,        Audio,     false)
+    REGISTER_DEMO (AudioPlaybackDemo,       Audio,     false)
+    REGISTER_DEMO (AudioRecordingDemo,      Audio,     false)
+    REGISTER_DEMO (AudioSettingsDemo,       Audio,     false)
+    REGISTER_DEMO (AudioSynthesiserDemo,    Audio,     false)
+    REGISTER_DEMO (MidiDemo,                Audio,     false)
+    REGISTER_DEMO (MPEDemo,                 Audio,     false)
+    REGISTER_DEMO (PluckedStringsDemo,      Audio,     false)
 
    #if JUCE_HAS_CONSTEXPR
     // REGISTER_DEMO (SimpleFFTDemo,           Audio,     false)

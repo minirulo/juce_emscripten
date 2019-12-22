@@ -28,12 +28,12 @@
 #include "../../../Assets/DemoUtilities.h"
 #include "JUCEDemos.h"
 
-// #include "../../../Assets/AudioLiveScrollingDisplay.h"
+#include "../../../Assets/AudioLiveScrollingDisplay.h"
 
 //==============================================================================
 #include "../../../GUI/AnimationAppDemo.h"
 #include "../../../GUI/AnimationDemo.h"
-// #include "../../../GUI/BouncingBallWavetableDemo.h"
+#include "../../../GUI/BouncingBallWavetableDemo.h"
 #if JUCE_USE_CAMERA && ! JUCE_LINUX
  #include "../../../GUI/CameraDemo.h"
 #endif
@@ -72,7 +72,7 @@ void registerDemos_Two() noexcept
 {
     REGISTER_DEMO (AnimationAppDemo,          GUI, false)
     REGISTER_DEMO (AnimationDemo,             GUI, false)
-    // REGISTER_DEMO (BouncingBallWavetableDemo, GUI, false)
+    REGISTER_DEMO (BouncingBallWavetableDemo, GUI, false)
    #if JUCE_USE_CAMERA && ! JUCE_LINUX
     REGISTER_DEMO (CameraDemo,                GUI, true)
    #endif
