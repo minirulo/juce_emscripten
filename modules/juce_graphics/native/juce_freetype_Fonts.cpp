@@ -198,8 +198,8 @@ public:
     {
         for (auto& path : paths)
         {
-            std::clog << "scanFontPaths:" <<
-              File::getCurrentWorkingDirectory().getChildFile(path).getFullPathName() << std::endl;
+            DBG("scanFontPaths:" <<
+              File::getCurrentWorkingDirectory().getChildFile(path).getFullPathName());
             DirectoryIterator iter (File::getCurrentWorkingDirectory().getChildFile (path), true);
 
             while (iter.next())
@@ -242,7 +242,7 @@ private:
         int faceIndex = 0;
         int numFaces = 0;
 
-        std::clog << "got font: " << file.getFullPathName() << std::endl;
+        DBG("got font: " << file.getFullPathName());
 
         do
         {
@@ -269,7 +269,7 @@ private:
                   && (face->style.equalsIgnoreCase (style) || style.isEmpty()))
                 return face;
 
-        std::cout << "NO MATCHING FONT FOUND" << std::endl;
+        DBG("NO MATCHING FONT FOUND");
 
         return nullptr;
     }
