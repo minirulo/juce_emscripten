@@ -26,6 +26,10 @@
 #include <deque>
 #endif
 
+#if JUCE_BELA
+extern "C" int cobalt_thread_mode();
+#endif
+
 namespace juce
 {
 
@@ -257,6 +261,8 @@ void CPUInformation::initialise() noexcept
     auto flags = getCpuInfo ("flags");
 
     hasMMX             = flags.contains ("mmx");
+    hasFMA3            = flags.contains ("fma");
+    hasFMA4            = flags.contains ("fma4");
     hasSSE             = flags.contains ("sse");
     hasSSE2            = flags.contains ("sse2");
     hasSSE3            = flags.contains ("sse3");
@@ -299,13 +305,18 @@ uint32 juce_millisecondsSinceStartup() noexcept
 
 int64 Time::getHighResolutionTicks() noexcept
 {
-   #if JUCE_BELA
-    return rt_timer_read() / 1000;
-   #else
     timespec t;
+
+   #if JUCE_BELA
+    if (cobalt_thread_mode() == 0x200 /*XNRELAX*/)
+        clock_gettime (CLOCK_MONOTONIC, &t);
+    else
+        __wrap_clock_gettime (CLOCK_MONOTONIC, &t);
+   #else
     clock_gettime (CLOCK_MONOTONIC, &t);
-    return (t.tv_sec * (int64) 1000000) + (t.tv_nsec / 1000);
    #endif
+
+    return (t.tv_sec * (int64) 1000000) + (t.tv_nsec / 1000);
 }
 
 int64 Time::getHighResolutionTicksPerSecond() noexcept
