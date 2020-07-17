@@ -11,7 +11,7 @@ Play with JUCE [DemoRunner](https://synthesizerv.com/lab/wasm-juce-demorunner/De
 - `juce_audio_devices`: partial support
    - Audio input: not supported
    - Audio output: supported through Emscripten's OpenAL API (`OpenALAudioIODevice`)
-   - MIDI input/output: not supported
+   - MIDI input/output: supported through Web MIDI by defining `JUCE_WEBMIDI=1` (enabled by default)
 - `juce_audio_formats`: fully supported
 - `juce_audio_plugin_client`: not supported (with no plan to port)
 - `juce_audio_processors`: partial support (no supported plugin format)

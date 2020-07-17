@@ -20,7 +20,13 @@
   ==============================================================================
 */
 
+#if ! defined(JUCE_WEBMIDI)
+#define JUCE_WEBMIDI 1
+#endif
+
+#if JUCE_WEBMIDI
 #define __WEB_MIDI_API__ 1
+#endif
 
 #include "emscripten/RtMidi.cpp"
 
