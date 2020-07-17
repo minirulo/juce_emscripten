@@ -662,8 +662,10 @@ bool AlertWindow::showOkCancelBox (AlertIconType iconType,
                                    Component* associatedComponent,
                                    ModalComponentManager::Callback* callback)
 {
+#   if ! JUCE_EMSCRIPTEN
     if (LookAndFeel::getDefaultLookAndFeel().isUsingNativeAlertWindows())
         return NativeMessageBox::showOkCancelBox (iconType, title, message, associatedComponent, callback);
+#   endif
 
     AlertWindowInfo info (title, message, associatedComponent, iconType, 2, callback, callback == nullptr);
     info.button1 = button1Text.isEmpty() ? TRANS("OK")     : button1Text;
@@ -681,8 +683,10 @@ int AlertWindow::showYesNoCancelBox (AlertIconType iconType,
                                      Component* associatedComponent,
                                      ModalComponentManager::Callback* callback)
 {
+#   if ! JUCE_EMSCRIPTEN
     if (LookAndFeel::getDefaultLookAndFeel().isUsingNativeAlertWindows())
         return NativeMessageBox::showYesNoCancelBox (iconType, title, message, associatedComponent, callback);
+#   endif
 
     AlertWindowInfo info (title, message, associatedComponent, iconType, 3, callback, callback == nullptr);
     info.button1 = button1Text.isEmpty() ? TRANS("Yes")     : button1Text;
