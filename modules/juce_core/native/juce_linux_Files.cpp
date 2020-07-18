@@ -20,6 +20,10 @@
   ==============================================================================
 */
 
+#if JUCE_EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 namespace juce
 {
 
@@ -192,6 +196,17 @@ bool Process::openDocument (const String& fileName, const String& parameters)
     auto cmdString = fileName.replace (" ", "\\ ", false);
     cmdString << " " << parameters;
 
+#   if JUCE_EMSCRIPTEN
+    MAIN_THREAD_EM_ASM({
+        var elem = window.document.createElement('a');
+        elem.href = UTF8ToString($0);
+        elem.target = "_blank";
+        document.body.appendChild(elem);
+        elem.click();        
+        document.body.removeChild(elem);
+    }, cmdString.toRawUTF8());
+    return true;
+#   else
     if (cmdString.startsWithIgnoreCase ("file:")
          || File::createFileWithoutCheckingPath (fileName).isDirectory()
          || ! isFileExecutable (fileName))
@@ -221,6 +236,7 @@ bool Process::openDocument (const String& fileName, const String& parameters)
     }
 
     return cpid >= 0;
+#   endif
 }
 
 void File::revealToUser() const
