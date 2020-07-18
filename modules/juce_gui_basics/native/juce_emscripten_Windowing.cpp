@@ -223,8 +223,7 @@ EM_JS(void, attachEventCallbackToWindow, (),
         'juce_inputCallback', 'void', ['number', 'string', 'string']);
 
     window.addEventListener('keydown', function(e) {
-        if (e.keyCode === 32)
-            e.preventDefault();
+        e.preventDefault();
         window.juce_keyboardCallback ('down', e.which || e.keyCode, e.key);
     });
     window.addEventListener('keyup', function(e) {
