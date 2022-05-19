@@ -1,8 +1,24 @@
 # Port of [JUCE](http://www.juce.com/) for the browser via Emscripten
 
-This port was originally a proof-of-concept created [here](https://github.com/beschulz/juce_emscripten) by @beschulz. This fork is an unofficial continuation of the attempt towards a complete JUCE framework running inside a browser.
+Based on [Dreamtonics/juce_emscripten](https://github.com/Dreamtonics/juce_emscripten/). Play with JUCE [DemoRunner](https://synthesizerv.com/lab/wasm-juce-demorunner/DemoRunner.html) in your browser.
 
-Play with JUCE [DemoRunner](https://synthesizerv.com/lab/wasm-juce-demorunner/DemoRunner.html) in your browser.
+Main goal of this fork is updating `juce` to `6.1.6`;
+
+## Troubleshooting
+
+- Link Error:
+   ```
+   wasm-ld: error: --shared-memory is disallowed by sfnt.c.o because it was not compiled with 'atomics' or 'bulk-memory' features.
+   ```
+   - Solution (found [here](https://github.com/emscripten-core/emscripten/issues/13402)):
+      - Add `-pthread` to `/opt/homebrew/Cellar/emscripten/3.1.8/libexec/tools/ports/sdl2.ttf`:33 and `/opt/homebrew/Cellar/emscripten/3.1.8/libexec/tools//ports/freetype.py`:91;
+      - Run `emcc --clear-port`;
+
+- JS Console error:
+   ```
+   SharedArrayBuffer is not defined
+   ```
+   - Solution: add the response headers `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` in the server. You can "fake" these with a chrome plugin like [this one](https://chrome.google.com/webstore/detail/modheader/idgpnmonknjnojddfkpgkljpfnnfcklj?src=modheader-com).
 
 ## Status
 
