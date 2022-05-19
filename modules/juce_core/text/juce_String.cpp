@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -23,10 +23,7 @@
 namespace juce
 {
 
-#if JUCE_MSVC
- #pragma warning (push)
- #pragma warning (disable: 4514 4996)
-#endif
+JUCE_BEGIN_IGNORE_WARNINGS_MSVC (4514 4996)
 
 NewLine newLine;
 
@@ -42,7 +39,7 @@ NewLine newLine;
  using CharPointer_wchar_t = CharPointer_UTF32;
 #endif
 
-static inline CharPointer_wchar_t castToCharPointer_wchar_t (const void* t) noexcept
+static CharPointer_wchar_t castToCharPointer_wchar_t (const void* t) noexcept
 {
     return CharPointer_wchar_t (static_cast<const CharPointer_wchar_t::CharType*> (t));
 }
@@ -71,7 +68,7 @@ public:
     static CharPointerType createUninitialisedBytes (size_t numBytes)
     {
         numBytes = (numBytes + 3) & ~(size_t) 3;
-        auto s = reinterpret_cast<StringHolder*> (new char [sizeof (StringHolder) - sizeof (CharType) + numBytes]);
+        auto s = unalignedPointerCast<StringHolder*> (new char [sizeof (StringHolder) - sizeof (CharType) + numBytes]);
         s->refCount.value = 0;
         s->allocatedNumBytes = numBytes;
         return CharPointerType (s->text);
@@ -160,7 +157,7 @@ public:
             ++(b->refCount);
     }
 
-    static inline void release (StringHolder* const b) noexcept
+    static void release (StringHolder* const b) noexcept
     {
         if (! isEmptyString (b))
             if (--(b->refCount) == -1)
@@ -172,7 +169,7 @@ public:
         release (bufferFromText (text));
     }
 
-    static inline int getReferenceCount (const CharPointerType text) noexcept
+    static int getReferenceCount (const CharPointerType text) noexcept
     {
         return bufferFromText (text)->refCount.get() + 1;
     }
@@ -210,14 +207,14 @@ public:
     CharType text[1];
 
 private:
-    static inline StringHolder* bufferFromText (const CharPointerType text) noexcept
+    static StringHolder* bufferFromText (const CharPointerType text) noexcept
     {
         // (Can't use offsetof() here because of warnings about this not being a POD)
-        return reinterpret_cast<StringHolder*> (reinterpret_cast<char*> (text.getAddress())
+        return unalignedPointerCast<StringHolder*> (reinterpret_cast<char*> (text.getAddress())
                     - (reinterpret_cast<size_t> (reinterpret_cast<StringHolder*> (128)->text) - 128));
     }
 
-    static inline bool isEmptyString (StringHolder* other)
+    static bool isEmptyString (StringHolder* other)
     {
         return (other->refCount.get() & 0x30000000) != 0;
     }
@@ -239,8 +236,6 @@ private:
                        "StringHolder is not large enough to hold an empty String");
     }
 };
-
-JUCE_DECLARE_DEPRECATED_STATIC (const String String::empty;)
 
 //==============================================================================
 String::String() noexcept  : text (&(emptyString.text))
@@ -393,7 +388,7 @@ namespace NumberToStringConverters
 
         do
         {
-            *--t = '0' + (char) (v % 10);
+            *--t = static_cast<char> ('0' + (char) (v % 10));
             v /= 10;
 
         } while (v > 0);
@@ -815,9 +810,10 @@ namespace StringHelpers
     }
 }
 
-String& String::operator+= (const int number)          { return StringHelpers::operationAddAssign<int>          (*this, number); }
-String& String::operator+= (const int64 number)        { return StringHelpers::operationAddAssign<int64>        (*this, number); }
-String& String::operator+= (const uint64 number)       { return StringHelpers::operationAddAssign<uint64>       (*this, number); }
+String& String::operator+= (const int number)     { return StringHelpers::operationAddAssign<int>    (*this, number); }
+String& String::operator+= (const long number)    { return StringHelpers::operationAddAssign<long>   (*this, number); }
+String& String::operator+= (const int64 number)   { return StringHelpers::operationAddAssign<int64>  (*this, number); }
+String& String::operator+= (const uint64 number)  { return StringHelpers::operationAddAssign<uint64> (*this, number); }
 
 //==============================================================================
 JUCE_API String JUCE_CALLTYPE operator+ (const char* s1, const String& s2)    { String s (s1); return s += s2; }
@@ -1282,7 +1278,7 @@ String String::replaceSection (int index, int numCharsToReplace, StringRef strin
     dest += newStringBytes;
     memcpy (dest, startOfRemainder.getAddress(), remainderBytes);
     dest += remainderBytes;
-    CharPointerType ((CharPointerType::CharType*) dest).writeNull();
+    CharPointerType (unalignedPointerCast<CharPointerType::CharType*> (dest)).writeNull();
 
     return result;
 }
@@ -1840,6 +1836,10 @@ String String::formattedRaw (const char* pf, ...)
         va_list args;
         va_start (args, pf);
 
+       #if JUCE_WINDOWS
+        JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wdeprecated-declarations")
+       #endif
+
       #if JUCE_ANDROID
         HeapBlock<char> temp (bufferSize);
         int num = (int) vsnprintf (temp.get(), bufferSize - 1, pf, args);
@@ -1856,6 +1856,10 @@ String String::formattedRaw (const char* pf, ...)
        #endif
                 (temp.get(), bufferSize - 1, wideCharVersion.toWideCharPointer(), args);
       #endif
+
+       #if JUCE_WINDOWS
+        JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+       #endif
         va_end (args);
 
         if (num > 0)
@@ -1892,7 +1896,7 @@ int String::getTrailingIntValue() const noexcept
             break;
         }
 
-        n += static_cast<juce_wchar> (mult) * (*t - '0');
+        n += (int) (((juce_wchar) mult) * (*t - '0'));
         mult *= 10;
     }
 
@@ -1912,7 +1916,7 @@ static String hexToString (Type v)
     do
     {
         *--t = hexDigits [(int) (v & 15)];
-        v >>= 4;
+        v = static_cast<Type> (v >> 4);
 
     } while (v != 0);
 
@@ -1953,8 +1957,8 @@ String String::toHexString (const void* const d, const int size, const int group
     return s;
 }
 
-int   String::getHexValue32() const noexcept    { return CharacterFunctions::HexParser<int>  ::parse (text); }
-int64 String::getHexValue64() const noexcept    { return CharacterFunctions::HexParser<int64>::parse (text); }
+int   String::getHexValue32() const noexcept    { return (int32) CharacterFunctions::HexParser<uint32>::parse (text); }
+int64 String::getHexValue64() const noexcept    { return (int64) CharacterFunctions::HexParser<uint64>::parse (text); }
 
 //==============================================================================
 static String getStringFromWindows1252Codepage (const char* data, size_t num)
@@ -1985,7 +1989,7 @@ String String::createStringFromData (const void* const unknownData, int size)
 
         StringCreationHelper builder ((size_t) numChars);
 
-        auto src = reinterpret_cast<const uint16*> (data + 2);
+        auto src = unalignedPointerCast<const uint16*> (data + 2);
 
         if (CharPointer_UTF16::isByteOrderMarkBigEndian (data))
         {
@@ -2055,19 +2059,19 @@ struct StringEncodingConverter
 template <>
 struct StringEncodingConverter<CharPointer_UTF8, CharPointer_UTF8>
 {
-    static CharPointer_UTF8 convert (const String& source) noexcept   { return CharPointer_UTF8 (reinterpret_cast<CharPointer_UTF8::CharType*> (source.getCharPointer().getAddress())); }
+    static CharPointer_UTF8 convert (const String& source) noexcept   { return CharPointer_UTF8 (unalignedPointerCast<CharPointer_UTF8::CharType*> (source.getCharPointer().getAddress())); }
 };
 
 template <>
 struct StringEncodingConverter<CharPointer_UTF16, CharPointer_UTF16>
 {
-    static CharPointer_UTF16 convert (const String& source) noexcept  { return CharPointer_UTF16 (reinterpret_cast<CharPointer_UTF16::CharType*> (source.getCharPointer().getAddress())); }
+    static CharPointer_UTF16 convert (const String& source) noexcept  { return CharPointer_UTF16 (unalignedPointerCast<CharPointer_UTF16::CharType*> (source.getCharPointer().getAddress())); }
 };
 
 template <>
 struct StringEncodingConverter<CharPointer_UTF32, CharPointer_UTF32>
 {
-    static CharPointer_UTF32 convert (const String& source) noexcept  { return CharPointer_UTF32 (reinterpret_cast<CharPointer_UTF32::CharType*> (source.getCharPointer().getAddress())); }
+    static CharPointer_UTF32 convert (const String& source) noexcept  { return CharPointer_UTF32 (unalignedPointerCast<CharPointer_UTF32::CharType*> (source.getCharPointer().getAddress())); }
 };
 
 CharPointer_UTF8  String::toUTF8()  const { return StringEncodingConverter<CharPointerType, CharPointer_UTF8 >::convert (*this); }
@@ -2142,12 +2146,10 @@ String String::fromUTF8 (const char* const buffer, int bufferSizeBytes)
     return {};
 }
 
-#if JUCE_MSVC
- #pragma warning (pop)
-#endif
+JUCE_END_IGNORE_WARNINGS_MSVC
 
 //==============================================================================
-StringRef::StringRef() noexcept  : text ((const String::CharPointerType::CharType*) "\0\0\0")
+StringRef::StringRef() noexcept  : text (unalignedPointerCast<const String::CharPointerType::CharType*> ("\0\0\0"))
 {
 }
 
@@ -2191,7 +2193,6 @@ StringRef::StringRef (const String& string) noexcept   : text (string.getCharPoi
 StringRef::StringRef (const std::string& string)       : StringRef (string.c_str()) {}
 
 //==============================================================================
-
 static String reduceLengthOfFloatString (const String& input)
 {
     const auto start = input.getCharPointer();
@@ -2305,6 +2306,18 @@ static String serialiseDouble (double input)
     return reduceLengthOfFloatString (String (input, numberOfDecimalPlaces));
 }
 
+//==============================================================================
+#if JUCE_ALLOW_STATIC_NULL_VARIABLES
+
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wdeprecated-declarations")
+JUCE_BEGIN_IGNORE_WARNINGS_MSVC (4996)
+
+const String String::empty;
+
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
+JUCE_END_IGNORE_WARNINGS_MSVC
+
+#endif
 
 //==============================================================================
 //==============================================================================
@@ -2454,6 +2467,9 @@ public:
             expect (String (StringRef ("abc")) == StringRef ("abc"));
             expect (String ("abc") + StringRef ("def") == "abcdef");
 
+            expect (String ("0x00").getHexValue32() == 0);
+            expect (String ("0x100").getHexValue32() == 256);
+
             String s2 ("123");
             s2 << ((int) 4) << ((short) 5) << "678" << L"9" << '0';
             s2 += "xyz";
@@ -2573,6 +2589,8 @@ public:
             expect (String (std::numeric_limits<int64>::max()).getLargeIntValue() == std::numeric_limits<int64>::max());
             expect (String (std::numeric_limits<int64>::min()).getLargeIntValue() == std::numeric_limits<int64>::min());
             expect (("xyz" + s).getTrailingIntValue() == s.getIntValue());
+            expect (String ("xyz-5").getTrailingIntValue() == -5);
+            expect (String ("-12345").getTrailingIntValue() == -12345);
             expect (s.getHexValue32() == 0x12345678);
             expect (s.getHexValue64() == (int64) 0x12345678);
             expect (String::toHexString (0x1234abcd).equalsIgnoreCase ("1234abcd"));
@@ -2934,6 +2952,17 @@ public:
                 expectEquals (serialiseDouble (test.first), test.second);
                 expectEquals (serialiseDouble (-test.first), "-" + test.second);
             }
+        }
+
+        {
+            beginTest ("Loops");
+
+            String str (CharPointer_UTF8 ("\xc2\xaf\\_(\xe3\x83\x84)_/\xc2\xaf"));
+            std::vector<juce_wchar> parts { 175, 92, 95, 40, 12484, 41, 95, 47, 175 };
+            size_t index = 0;
+
+            for (auto c : str)
+                expectEquals (c, parts[index++]);
         }
     }
 };

@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -138,7 +138,7 @@ String SystemStats::getStackBacktrace()
 {
     String result;
 
-   #if JUCE_ANDROID || JUCE_MINGW || JUCE_EMSCRIPTEN
+   #if JUCE_ANDROID || JUCE_MINGW || JUCE_WASM
     jassertfalse; // sorry, not implemented yet!
 
    #elif JUCE_WINDOWS
@@ -174,7 +174,7 @@ String SystemStats::getStackBacktrace()
 
    #else
     void* stack[128];
-    int frames = backtrace (stack, numElementsInArray (stack));
+    auto frames = backtrace (stack, numElementsInArray (stack));
     char** frameStrings = backtrace_symbols (stack, frames);
 
     for (int i = 0; i < frames; ++i)
@@ -187,6 +187,8 @@ String SystemStats::getStackBacktrace()
 }
 
 //==============================================================================
+#if ! JUCE_WASM
+
 static SystemStats::CrashHandlerFunction globalCrashHandler = nullptr;
 
 #if JUCE_WINDOWS
@@ -194,12 +196,6 @@ static LONG WINAPI handleCrash (LPEXCEPTION_POINTERS ep)
 {
     globalCrashHandler (ep);
     return EXCEPTION_EXECUTE_HANDLER;
-}
-#elif defined(JUCE_EMSCRIPTEN)
-static void handleCrash (int ptr)
-{
-    globalCrashHandler((void*) (pointer_sized_int) ptr);
-    //kill (getpid(), SIGKILL);
 }
 #else
 static void handleCrash (int signum)
@@ -218,8 +214,6 @@ void SystemStats::setApplicationCrashHandler (CrashHandlerFunction handler)
 
    #if JUCE_WINDOWS
     SetUnhandledExceptionFilter (handleCrash);
-   #elif defined(JUCE_EMSCRIPTEN)
-    // TODO: DO IT
    #else
     const int signals[] = { SIGFPE, SIGILL, SIGSEGV, SIGBUS, SIGABRT, SIGSYS };
 
@@ -230,6 +224,8 @@ void SystemStats::setApplicationCrashHandler (CrashHandlerFunction handler)
     }
    #endif
 }
+
+#endif
 
 bool SystemStats::isRunningInAppExtensionSandbox() noexcept
 {

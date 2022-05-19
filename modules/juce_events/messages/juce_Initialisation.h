@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
@@ -84,13 +84,14 @@ public:
 
     See the JUCEApplication and JUCEApplicationBase class documentation for more details.
 */
-#ifdef DOXYGEN
+#if DOXYGEN
  #define START_JUCE_APPLICATION(AppClass)
-
 #else
-
  #if JUCE_WINDOWS && ! defined (_CONSOLE)
-  #define JUCE_MAIN_FUNCTION       int __stdcall WinMain (struct HINSTANCE__*, struct HINSTANCE__*, char*, int)
+  #define JUCE_MAIN_FUNCTION                                                        \
+      JUCE_BEGIN_IGNORE_WARNINGS_MSVC (28251)                                       \
+      int __stdcall WinMain (struct HINSTANCE__*, struct HINSTANCE__*, char*, int)  \
+      JUCE_END_IGNORE_WARNINGS_MSVC
   #define JUCE_MAIN_FUNCTION_ARGS
  #else
   #define JUCE_MAIN_FUNCTION       int main (int argc, char* argv[])
@@ -100,12 +101,16 @@ public:
  #if JUCE_IOS
 
   #define JUCE_CREATE_APPLICATION_DEFINE(AppClass) \
+    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmissing-prototypes") \
     juce::JUCEApplicationBase* juce_CreateApplication() { return new AppClass(); } \
-    void* juce_GetIOSCustomDelegateClass()              { return nullptr; }
+    void* juce_GetIOSCustomDelegateClass()              { return nullptr; } \
+    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
   #define JUCE_CREATE_APPLICATION_DEFINE_CUSTOM_DELEGATE(AppClass, DelegateClass) \
+    JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmissing-prototypes") \
     juce::JUCEApplicationBase* juce_CreateApplication() { return new AppClass(); } \
-    void* juce_GetIOSCustomDelegateClass()              { return [DelegateClass class]; }
+    void* juce_GetIOSCustomDelegateClass()              { return [DelegateClass class]; } \
+    JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
   #define JUCE_MAIN_FUNCTION_DEFINITION \
     extern "C" JUCE_MAIN_FUNCTION \
@@ -128,22 +133,12 @@ public:
     juce::JUCEApplicationBase* juce_CreateApplication(); \
     juce::JUCEApplicationBase* juce_CreateApplication() { return new AppClass(); }
 
-  #if JUCE_EMSCRIPTEN
-   #define JUCE_MAIN_FUNCTION_DEFINITION \
-   extern void launchApp(int argc, char* argv[]); \
-   extern "C" int main(int argc, char* argv[]) \
-   { \
-      launchApp(argc, argv); \
-      return 0; \
-   }
-  #else
-   #define JUCE_MAIN_FUNCTION_DEFINITION \
+  #define JUCE_MAIN_FUNCTION_DEFINITION \
     extern "C" JUCE_MAIN_FUNCTION \
     { \
        juce::JUCEApplicationBase::createInstance = &juce_CreateApplication; \
        return juce::JUCEApplicationBase::main (JUCE_MAIN_FUNCTION_ARGS); \
     }
-  #endif
 
  #endif
 
@@ -162,8 +157,10 @@ public:
  #else
 
   #define START_JUCE_APPLICATION(AppClass) \
+     JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wmissing-prototypes") \
      JUCE_CREATE_APPLICATION_DEFINE(AppClass) \
-     JUCE_MAIN_FUNCTION_DEFINITION
+     JUCE_MAIN_FUNCTION_DEFINITION \
+     JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
   #if JUCE_IOS
     /**

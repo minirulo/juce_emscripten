@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -24,7 +23,7 @@
   ==============================================================================
 */
 
-#include "../../juce_core/system/juce_TargetPlatform.h"
+#include <juce_core/system/juce_TargetPlatform.h>
 #include "../utility/juce_CheckSettingMacros.h"
 
 #if JucePlugin_Build_AAX && (JUCE_INCLUDED_AAX_IN_MM || defined (_WIN32) || defined (_WIN64))
@@ -32,31 +31,19 @@
 #include "../utility/juce_IncludeSystemHeaders.h"
 #include "../utility/juce_IncludeModuleHeaders.h"
 #include "../utility/juce_WindowsHooks.h"
-#include "../utility/juce_FakeMouseMoveGenerator.h"
 
-#include "../../juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp"
+#include <juce_audio_processors/format_types/juce_LegacyAudioParameter.cpp>
 
-#ifdef __clang__
- #pragma clang diagnostic push
- #pragma clang diagnostic ignored "-Wnon-virtual-dtor"
- #pragma clang diagnostic ignored "-Wsign-conversion"
- #pragma clang diagnostic ignored "-Wextra-semi"
- #pragma clang diagnostic ignored "-Wshift-sign-overflow"
- #if __has_warning("-Wpragma-pack")
-  #pragma clang diagnostic ignored "-Wpragma-pack"
- #endif
- #if __has_warning("-Wzero-as-null-pointer-constant")
-  #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
- #endif
- #if __has_warning("-Winconsistent-missing-destructor-override")
-  #pragma clang diagnostic ignored "-Winconsistent-missing-destructor-override"
- #endif
-#endif
-
-#ifdef _MSC_VER
- #pragma warning (push)
- #pragma warning (disable : 4127 4512)
-#endif
+JUCE_BEGIN_IGNORE_WARNINGS_MSVC (4127 4512 4996)
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wnon-virtual-dtor",
+                                     "-Wsign-conversion",
+                                     "-Wextra-semi",
+                                     "-Wshift-sign-overflow",
+                                     "-Wpragma-pack",
+                                     "-Wzero-as-null-pointer-constant",
+                                     "-Winconsistent-missing-destructor-override",
+                                     "-Wfour-char-constants",
+                                     "-Wtautological-overlap-compare")
 
 #include <AAX_Version.h>
 
@@ -90,13 +77,10 @@ static_assert (AAX_SDK_CURRENT_REVISION >= AAX_SDK_2p3p0_REVISION, "JUCE require
  #endif
 #endif
 
-#ifdef _MSC_VER
- #pragma warning (pop)
-#endif
+JUCE_END_IGNORE_WARNINGS_MSVC
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
-#ifdef __clang__
- #pragma clang diagnostic pop
-#endif
+JUCE_BEGIN_IGNORE_WARNINGS_GCC_LIKE ("-Wfour-char-constants")
 
 #if JUCE_WINDOWS
  #ifndef JucePlugin_AAXLibs_path
@@ -147,7 +131,7 @@ namespace AAXClasses
 
     static void check (AAX_Result result)
     {
-        jassert (result == AAX_SUCCESS); ignoreUnused (result);
+        jassertquiet (result == AAX_SUCCESS);
     }
 
     // maps a channel index of an AAX format to an index of a juce format
@@ -300,7 +284,7 @@ namespace AAXClasses
         return AAX_eStemFormat_INT32_MAX;
     }
 
-    static inline AudioChannelSet channelSetFromStemFormat (AAX_EStemFormat format, bool ignoreLayout) noexcept
+    static AudioChannelSet channelSetFromStemFormat (AAX_EStemFormat format, bool ignoreLayout) noexcept
     {
         if (! ignoreLayout)
         {
@@ -325,6 +309,12 @@ namespace AAXClasses
                 case AAX_eStemFormat_Ambi_1_ACN: return AudioChannelSet::ambisonic (1);
                 case AAX_eStemFormat_Ambi_2_ACN: return AudioChannelSet::ambisonic (2);
                 case AAX_eStemFormat_Ambi_3_ACN: return AudioChannelSet::ambisonic (3);
+                case AAX_eStemFormat_Reserved_1:
+                case AAX_eStemFormat_Reserved_2:
+                case AAX_eStemFormat_Reserved_3:
+                case AAX_eStemFormatNum:
+                case AAX_eStemFormat_Any:
+                case AAX_eStemFormat_INT32_MAX:
                 default:                         return AudioChannelSet::disabled();
             }
         }
@@ -341,6 +331,10 @@ namespace AAXClasses
             case AudioProcessorParameter::compressorLimiterGainReductionMeter:  return AAX_eMeterType_CLGain;
             case AudioProcessorParameter::expanderGateGainReductionMeter:       return AAX_eMeterType_EGGain;
             case AudioProcessorParameter::analysisMeter:                        return AAX_eMeterType_Analysis;
+            case AudioProcessorParameter::genericParameter:
+            case AudioProcessorParameter::inputGain:
+            case AudioProcessorParameter::outputGain:
+            case AudioProcessorParameter::otherMeter:
             default:                                                            return AAX_eMeterType_Other;
         }
     }
@@ -353,6 +347,7 @@ namespace AAXClasses
             case AAX_eHighlightColor_Blue:      return Colours::blue;
             case AAX_eHighlightColor_Green:     return Colours::green;
             case AAX_eHighlightColor_Yellow:    return Colours::yellow;
+            case AAX_eHighlightColor_Num:
             default:                            jassertfalse; break;
         }
 
@@ -509,8 +504,9 @@ namespace AAXClasses
         {
             if (component != nullptr)
             {
-                viewSize->horz = (float) component->getWidth();
-                viewSize->vert = (float) component->getHeight();
+                *viewSize = convertToHostBounds ({ (float) component->getHeight(),
+                                                   (float) component->getWidth() });
+
                 return AAX_SUCCESS;
             }
 
@@ -566,6 +562,18 @@ namespace AAXClasses
         AAX_CParamID getAAXParamIDFromJuceIndex (int index) const noexcept;
 
         //==============================================================================
+        static AAX_Point convertToHostBounds (AAX_Point pluginSize)
+        {
+            auto desktopScale = Desktop::getInstance().getGlobalScaleFactor();
+
+            if (approximatelyEqual (desktopScale, 1.0f))
+                return pluginSize;
+
+            return { pluginSize.vert * desktopScale,
+                     pluginSize.horz * desktopScale };
+        }
+
+        //==============================================================================
         struct ContentWrapperComponent  : public Component
         {
             ContentWrapperComponent (JuceAAX_GUI& gui, AudioProcessor& plugin)
@@ -583,8 +591,6 @@ namespace AAXClasses
                     setBounds (lastValidSize);
                     pluginEditor->addMouseListener (this, true);
                 }
-
-                ignoreUnused (fakeMouseGenerator);
             }
 
             ~ContentWrapperComponent() override
@@ -623,26 +629,39 @@ namespace AAXClasses
             void mouseUp   (const MouseEvent& e) override  { callMouseMethod (e, &AAX_IViewContainer::HandleParameterMouseUp); }
             void mouseDrag (const MouseEvent& e) override  { callMouseMethod (e, &AAX_IViewContainer::HandleParameterMouseDrag); }
 
+            void parentSizeChanged() override
+            {
+                resizeHostWindow();
+
+                if (pluginEditor != nullptr)
+                    pluginEditor->repaint();
+            }
+
             void childBoundsChanged (Component*) override
+            {
+                if (resizeHostWindow())
+                {
+                    setSize (pluginEditor->getWidth(), pluginEditor->getHeight());
+                    lastValidSize = getBounds();
+                }
+                else
+                {
+                    pluginEditor->setBoundsConstrained (pluginEditor->getBounds().withSize (lastValidSize.getWidth(),
+                                                                                            lastValidSize.getHeight()));
+                }
+            }
+
+            bool resizeHostWindow()
             {
                 if (pluginEditor != nullptr)
                 {
-                    auto w = pluginEditor->getWidth();
-                    auto h = pluginEditor->getHeight();
+                    auto newSize = convertToHostBounds ({ (float) pluginEditor->getHeight(),
+                                                          (float) pluginEditor->getWidth() });
 
-                    AAX_Point newSize ((float) h, (float) w);
-
-                    if (owner.GetViewContainer()->SetViewSize (newSize) == AAX_SUCCESS)
-                    {
-                        setSize (w, h);
-                        lastValidSize = getBounds();
-                    }
-                    else
-                    {
-                        auto validSize = pluginEditor->getBounds().withSize (lastValidSize.getWidth(), lastValidSize.getHeight());
-                        pluginEditor->setBoundsConstrained (validSize);
-                    }
+                    return owner.GetViewContainer()->SetViewSize (newSize) == AAX_SUCCESS;
                 }
+
+                return false;
             }
 
             std::unique_ptr<AudioProcessorEditor> pluginEditor;
@@ -651,7 +670,6 @@ namespace AAXClasses
            #if JUCE_WINDOWS
             WindowsHooks hooks;
            #endif
-            FakeMouseMoveGenerator fakeMouseGenerator;
             juce::Rectangle<int> lastValidSize;
 
             JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ContentWrapperComponent)
@@ -661,6 +679,31 @@ namespace AAXClasses
         ScopedJuceInitialiser_GUI libraryInitialiser;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (JuceAAX_GUI)
+    };
+
+    // Copied here, because not all versions of the AAX SDK define all of these values
+    enum JUCE_AAX_EFrameRate : std::underlying_type_t<AAX_EFrameRate>
+    {
+        JUCE_AAX_eFrameRate_Undeclared = 0,
+        JUCE_AAX_eFrameRate_24Frame = 1,
+        JUCE_AAX_eFrameRate_25Frame = 2,
+        JUCE_AAX_eFrameRate_2997NonDrop = 3,
+        JUCE_AAX_eFrameRate_2997DropFrame = 4,
+        JUCE_AAX_eFrameRate_30NonDrop = 5,
+        JUCE_AAX_eFrameRate_30DropFrame = 6,
+        JUCE_AAX_eFrameRate_23976 = 7,
+        JUCE_AAX_eFrameRate_47952 = 8,
+        JUCE_AAX_eFrameRate_48Frame = 9,
+        JUCE_AAX_eFrameRate_50Frame = 10,
+        JUCE_AAX_eFrameRate_5994NonDrop = 11,
+        JUCE_AAX_eFrameRate_5994DropFrame = 12,
+        JUCE_AAX_eFrameRate_60NonDrop = 13,
+        JUCE_AAX_eFrameRate_60DropFrame = 14,
+        JUCE_AAX_eFrameRate_100Frame = 15,
+        JUCE_AAX_eFrameRate_11988NonDrop = 16,
+        JUCE_AAX_eFrameRate_11988DropFrame = 17,
+        JUCE_AAX_eFrameRate_120NonDrop = 18,
+        JUCE_AAX_eFrameRate_120DropFrame = 19
     };
 
     static void AAX_CALLBACK algorithmProcessCallback (JUCEAlgorithmContext* const instancesBegin[], const void* const instancesEnd);
@@ -804,11 +847,15 @@ namespace AAXClasses
             // * The preset is loaded in PT 10 using the AAX version.
             // * The session is then saved, and closed.
             // * The saved session is loaded, but acting as if the preset was never loaded.
+            // IMPORTANT! If the plugin doesn't manage its own bypass parameter, don't try
+            // to overwrite the bypass parameter value.
             auto numParameters = juceParameters.getNumParameters();
 
             for (int i = 0; i < numParameters; ++i)
-                if (auto paramID = getAAXParamIDFromJuceIndex(i))
-                    SetParameterNormalizedValue (paramID, juceParameters.getParamForIndex (i)->getValue());
+                if (auto* juceParam = juceParameters.getParamForIndex (i))
+                    if (juceParam != ownedBypassParameter.get())
+                        if (auto paramID = getAAXParamIDFromJuceIndex (i))
+                            SetParameterNormalizedValue (paramID, juceParam->getValue());
 
             return AAX_SUCCESS;
         }
@@ -876,6 +923,13 @@ namespace AAXClasses
                     param->sendValueChangedMessageToListeners (newValue);
                 }
             }
+        }
+
+        AAX_Result GetNumberOfChanges (int32_t* numChanges) const override
+        {
+            const auto result = AAX_CEffectParameters::GetNumberOfChanges (numChanges);
+            *numChanges += numSetDirtyCalls;
+            return result;
         }
 
         AAX_Result UpdateParameterNormalizedValue (AAX_CParamID paramID, double value, AAX_EUpdateSource source) override
@@ -1001,7 +1055,7 @@ namespace AAXClasses
                  || transport.GetTimelineSelectionStartPosition (&info.timeInSamples) != AAX_SUCCESS)
                 check (transport.GetCurrentNativeSampleLocation (&info.timeInSamples));
 
-            info.timeInSeconds = info.timeInSamples / sampleRate;
+            info.timeInSeconds = (float) info.timeInSamples / sampleRate;
 
             int64_t ticks = 0;
 
@@ -1010,39 +1064,62 @@ namespace AAXClasses
             else
                 check (transport.GetCurrentTickPosition (&ticks));
 
-            info.ppqPosition = ticks / 960000.0;
+            info.ppqPosition = (double) ticks / 960000.0;
 
             info.isLooping = false;
             int64_t loopStartTick = 0, loopEndTick = 0;
             check (transport.GetCurrentLoopPosition (&info.isLooping, &loopStartTick, &loopEndTick));
-            info.ppqLoopStart = loopStartTick / 960000.0;
-            info.ppqLoopEnd   = loopEndTick   / 960000.0;
+            info.ppqLoopStart = (double) loopStartTick / 960000.0;
+            info.ppqLoopEnd   = (double) loopEndTick   / 960000.0;
 
-            info.editOriginTime = 0;
-            info.frameRate = AudioPlayHead::fpsUnknown;
-
-            AAX_EFrameRate frameRate;
-            int32_t offset;
-
-            if (transport.GetTimeCodeInfo (&frameRate, &offset) == AAX_SUCCESS)
+            std::tie (info.frameRate, info.editOriginTime) = [&transport]
             {
-                double framesPerSec = 24.0;
+                AAX_EFrameRate frameRate;
+                int32_t offset;
 
-                switch (frameRate)
+                if (transport.GetTimeCodeInfo (&frameRate, &offset) != AAX_SUCCESS)
+                    return std::make_tuple (FrameRate(), 0.0);
+
+                const auto rate = [&]
                 {
-                    case AAX_eFrameRate_Undeclared:    break;
-                    case AAX_eFrameRate_24Frame:       info.frameRate = AudioPlayHead::fps24;       break;
-                    case AAX_eFrameRate_25Frame:       info.frameRate = AudioPlayHead::fps25;       framesPerSec = 25.0; break;
-                    case AAX_eFrameRate_2997NonDrop:   info.frameRate = AudioPlayHead::fps2997;     framesPerSec = 30.0 * 1000.0 / 1001.0; break;
-                    case AAX_eFrameRate_2997DropFrame: info.frameRate = AudioPlayHead::fps2997drop; framesPerSec = 30.0 * 1000.0 / 1001.0; break;
-                    case AAX_eFrameRate_30NonDrop:     info.frameRate = AudioPlayHead::fps30;       framesPerSec = 30.0; break;
-                    case AAX_eFrameRate_30DropFrame:   info.frameRate = AudioPlayHead::fps30drop;   framesPerSec = 30.0; break;
-                    case AAX_eFrameRate_23976:         info.frameRate = AudioPlayHead::fps23976;    framesPerSec = 24.0 * 1000.0 / 1001.0; break;
-                    default:                           break;
-                }
+                    switch ((JUCE_AAX_EFrameRate) frameRate)
+                    {
+                        case JUCE_AAX_eFrameRate_24Frame:         return FrameRate().withBaseRate (24);
+                        case JUCE_AAX_eFrameRate_23976:           return FrameRate().withBaseRate (24).withPullDown();
 
-                info.editOriginTime = offset / framesPerSec;
-            }
+                        case JUCE_AAX_eFrameRate_25Frame:         return FrameRate().withBaseRate (25);
+
+                        case JUCE_AAX_eFrameRate_30NonDrop:       return FrameRate().withBaseRate (30);
+                        case JUCE_AAX_eFrameRate_30DropFrame:     return FrameRate().withBaseRate (30).withDrop();
+                        case JUCE_AAX_eFrameRate_2997NonDrop:     return FrameRate().withBaseRate (30).withPullDown();
+                        case JUCE_AAX_eFrameRate_2997DropFrame:   return FrameRate().withBaseRate (30).withPullDown().withDrop();
+
+                        case JUCE_AAX_eFrameRate_48Frame:         return FrameRate().withBaseRate (48);
+                        case JUCE_AAX_eFrameRate_47952:           return FrameRate().withBaseRate (48).withPullDown();
+
+                        case JUCE_AAX_eFrameRate_50Frame:         return FrameRate().withBaseRate (50);
+
+                        case JUCE_AAX_eFrameRate_60NonDrop:       return FrameRate().withBaseRate (60);
+                        case JUCE_AAX_eFrameRate_60DropFrame:     return FrameRate().withBaseRate (60).withDrop();
+                        case JUCE_AAX_eFrameRate_5994NonDrop:     return FrameRate().withBaseRate (60).withPullDown();
+                        case JUCE_AAX_eFrameRate_5994DropFrame:   return FrameRate().withBaseRate (60).withPullDown().withDrop();
+
+                        case JUCE_AAX_eFrameRate_100Frame:        return FrameRate().withBaseRate (100);
+
+                        case JUCE_AAX_eFrameRate_120NonDrop:      return FrameRate().withBaseRate (120);
+                        case JUCE_AAX_eFrameRate_120DropFrame:    return FrameRate().withBaseRate (120).withDrop();
+                        case JUCE_AAX_eFrameRate_11988NonDrop:    return FrameRate().withBaseRate (120).withPullDown();
+                        case JUCE_AAX_eFrameRate_11988DropFrame:  return FrameRate().withBaseRate (120).withPullDown().withDrop();
+
+                        case JUCE_AAX_eFrameRate_Undeclared:      break;
+                    }
+
+                    return FrameRate();
+                }();
+
+                const auto effectiveRate = rate.getEffectiveRate();
+                return std::make_tuple (rate, effectiveRate != 0.0 ? offset / effectiveRate : 0.0);
+            }();
 
             // No way to get these: (?)
             info.isRecording = false;
@@ -1063,24 +1140,31 @@ namespace AAXClasses
                 SetParameterNormalizedValue (paramID, (double) newValue);
         }
 
-        void audioProcessorChanged (AudioProcessor* processor) override
+        void audioProcessorChanged (AudioProcessor* processor, const ChangeDetails& details) override
         {
             ++mNumPlugInChanges;
 
-            auto numParameters = juceParameters.getNumParameters();
-
-            for (int i = 0; i < numParameters; ++i)
+            if (details.parameterInfoChanged)
             {
-                if (auto* p = mParameterManager.GetParameterByID (getAAXParamIDFromJuceIndex (i)))
-                {
-                    auto newName = juceParameters.getParamForIndex (i)->getName (31);
+                auto numParameters = juceParameters.getNumParameters();
 
-                    if (p->Name() != newName.toRawUTF8())
-                        p->SetName (AAX_CString (newName.toRawUTF8()));
+                for (int i = 0; i < numParameters; ++i)
+                {
+                    if (auto* p = mParameterManager.GetParameterByID (getAAXParamIDFromJuceIndex (i)))
+                    {
+                        auto newName = juceParameters.getParamForIndex (i)->getName (31);
+
+                        if (p->Name() != newName.toRawUTF8())
+                            p->SetName (AAX_CString (newName.toRawUTF8()));
+                    }
                 }
             }
 
-            check (Controller()->SetSignalLatency (processor->getLatencySamples()));
+            if (details.latencyChanged)
+                check (Controller()->SetSignalLatency (processor->getLatencySamples()));
+
+            if (details.nonParameterStateChanged)
+                ++numSetDirtyCalls;
         }
 
         void audioProcessorParameterChangeGestureBegin (AudioProcessor*, int parameterIndex) override
@@ -1102,11 +1186,25 @@ namespace AAXClasses
                 case AAX_eNotificationEvent_EnteringOfflineMode:  pluginInstance->setNonRealtime (true);  break;
                 case AAX_eNotificationEvent_ExitingOfflineMode:   pluginInstance->setNonRealtime (false); break;
 
+                case AAX_eNotificationEvent_ASProcessingState:
+                {
+                    if (data != nullptr && size == sizeof (AAX_EProcessingState))
+                    {
+                        const auto state = *static_cast<const AAX_EProcessingState*> (data);
+                        const auto nonRealtime = state == AAX_eProcessingState_Start
+                                              || state == AAX_eProcessingState_StartPass
+                                              || state == AAX_eProcessingState_BeginPassGroup;
+                        pluginInstance->setNonRealtime (nonRealtime);
+                    }
+
+                    break;
+                }
+
                 case AAX_eNotificationEvent_TrackNameChanged:
                     if (data != nullptr)
                     {
                         AudioProcessor::TrackProperties props;
-                        props.name = static_cast<const AAX_IString*> (data)->Get();
+                        props.name = String::fromUTF8 (static_cast<const AAX_IString*> (data)->Get());
 
                         pluginInstance->updateTrackProperties (props);
                     }
@@ -1229,8 +1327,7 @@ namespace AAXClasses
         {
             auto currentLayout = getDefaultLayout (p, true);
             bool success = p.checkBusesLayoutSupported (currentLayout);
-            jassert (success);
-            ignoreUnused (success);
+            jassertquiet (success);
 
             auto numInputBuses  = p.getBusCount (true);
             auto numOutputBuses = p.getBusCount (false);
@@ -1303,7 +1400,7 @@ namespace AAXClasses
                     return foundValid;
 
                 for (int i = 2; i < numInputBuses; ++i)
-                    if (currentLayout.outputBuses.getReference (i) != AudioChannelSet::disabled())
+                    if (! currentLayout.inputBuses.getReference (i).isDisabled())
                         return foundValid;
             }
 
@@ -1436,7 +1533,7 @@ namespace AAXClasses
                     }
                 }
 
-                if (bypass)
+                if (bypass && pluginInstance->getBypassParameter() == nullptr)
                     pluginInstance->processBlockBypassed (buffer, midiBuffer);
                 else
                     pluginInstance->processBlock (buffer, midiBuffer);
@@ -1444,22 +1541,18 @@ namespace AAXClasses
 
            #if JucePlugin_ProducesMidiOutput || JucePlugin_IsMidiEffect
             {
-                const juce::uint8* midiEventData;
-                int midiEventSize, midiEventPosition;
-                MidiBuffer::Iterator i (midiBuffer);
-
                 AAX_CMidiPacket packet;
                 packet.mIsImmediate = false;
 
-                while (i.getNextEvent (midiEventData, midiEventSize, midiEventPosition))
+                for (const auto metadata : midiBuffer)
                 {
-                    jassert (isPositiveAndBelow (midiEventPosition, bufferSize));
+                    jassert (isPositiveAndBelow (metadata.samplePosition, bufferSize));
 
-                    if (midiEventSize <= 4)
+                    if (metadata.numBytes <= 4)
                     {
-                        packet.mTimestamp   = (uint32_t) midiEventPosition;
-                        packet.mLength      = (uint32_t) midiEventSize;
-                        memcpy (packet.mData, midiEventData, (size_t) midiEventSize);
+                        packet.mTimestamp   = (uint32_t) metadata.samplePosition;
+                        packet.mLength      = (uint32_t) metadata.numBytes;
+                        memcpy (packet.mData, metadata.data, (size_t) metadata.numBytes);
 
                         check (midiNodesOut->PostMIDIPacket (&packet));
                     }
@@ -1513,11 +1606,11 @@ namespace AAXClasses
             }
 
             if (! bypassPartOfRegularParams)
-                juceParameters.params.add (bypassParameter);
+                juceParameters.addNonOwning (bypassParameter);
 
             int parameterIndex = 0;
 
-            for (auto* juceParam : juceParameters.params)
+            for (auto* juceParam : juceParameters)
             {
                 auto isBypassParameter = (juceParam == bypassParameter);
 
@@ -1964,7 +2057,7 @@ namespace AAXClasses
         bool isPrepared = false;
         MidiBuffer midiBuffer;
         Array<float*> channelList;
-        int32_t juceChunkIndex = 0;
+        int32_t juceChunkIndex = 0, numSetDirtyCalls = 0;
         AAX_CSampleRate sampleRate = 0;
         int lastBufferSize = 1024, maxBufferSize = 1024;
         bool hasSidechain = false, canDisableSidechain = false, lastSideChainState = false;
@@ -2067,7 +2160,7 @@ namespace AAXClasses
 
         int meterIdx = 0;
 
-        for (auto* param : params.params)
+        for (auto* param : params)
         {
             auto category = param->getCategory();
 
@@ -2187,6 +2280,10 @@ namespace AAXClasses
         properties->AddProperty (AAX_eProperty_Constraint_AlwaysProcess, true);
        #endif
 
+       #if JucePlugin_AAXDisableDefaultSettingsChunks
+        properties->AddProperty (AAX_eProperty_Constraint_DoNotApplyDefaultSettings, true);
+       #endif
+
        #if JucePlugin_AAXDisableSaveRestore
         properties->AddProperty (AAX_eProperty_SupportsSaveRestore, false);
        #endif
@@ -2229,7 +2326,7 @@ namespace AAXClasses
         check (desc.AddProcessProc_Native (algorithmProcessCallback, properties));
     }
 
-    static inline bool hostSupportsStemFormat (AAX_EStemFormat stemFormat, const AAX_IFeatureInfo* featureInfo)
+    static bool hostSupportsStemFormat (AAX_EStemFormat stemFormat, const AAX_IFeatureInfo* featureInfo)
     {
         if (featureInfo != nullptr)
         {
@@ -2262,7 +2359,6 @@ namespace AAXClasses
 
         auto pluginNames = plugin->getAlternateDisplayNames();
 
-        pluginNames.insert (0, JucePlugin_Desc);
         pluginNames.insert (0, JucePlugin_Name);
 
         pluginNames.removeDuplicates (false);
@@ -2329,7 +2425,7 @@ namespace AAXClasses
         jassert (pluginIds.size() > 0);
        #endif
     }
-}
+} // namespace AAXClasses
 
 void AAX_CALLBACK AAXClasses::algorithmProcessCallback (JUCEAlgorithmContext* const instancesBegin[], const void* const instancesEnd)
 {
@@ -2362,6 +2458,8 @@ AAX_Result JUCE_CDECL GetEffectDescriptions (AAX_ICollection* collection)
 
     return AAX_ERROR_NULL_OBJECT;
 }
+
+JUCE_END_IGNORE_WARNINGS_GCC_LIKE
 
 //==============================================================================
 #if _MSC_VER || JUCE_MINGW

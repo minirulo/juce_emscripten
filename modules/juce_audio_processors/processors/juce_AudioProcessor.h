@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -78,6 +77,8 @@ public:
         singlePrecision,
         doublePrecision
     };
+
+    using ChangeDetails = AudioProcessorListener::ChangeDetails;
 
     //==============================================================================
     /** Destructor. */
@@ -992,7 +993,7 @@ public:
         It sends a hint to the host that something like the program, number of parameters,
         etc, has changed, and that it should update itself.
     */
-    void updateHostDisplay();
+    void updateHostDisplay (const ChangeDetails& details = ChangeDetails::getDefaultFlags());
 
     //==============================================================================
     /** Adds a parameter to the AudioProcessor.
@@ -1175,7 +1176,7 @@ public:
             Unknown = -1
         };
 
-        std::function<float(float)> curve;    // a function which represents your curve (such as an eq)
+        std::function<float (float)> curve;   // a function which represents your curve (such as an eq)
         Range<float> xRange, yRange;          // the data range of your curve
 
         // For some curve types, your plug-in may already measure the current input and output values.
@@ -1208,7 +1209,7 @@ public:
     /** When loaded by a plugin wrapper, this flag will be set to indicate the type
         of plugin within which the processor is running.
     */
-    WrapperType wrapperType;
+    const WrapperType wrapperType;
 
     /** Returns a textual description of a WrapperType value */
     static const char* getWrapperTypeDescription (AudioProcessor::WrapperType) noexcept;
@@ -1339,8 +1340,8 @@ protected:
 
         void addBus (bool isInput, const String& name, const AudioChannelSet& defaultLayout, bool isActivatedByDefault = true);
 
-        BusesProperties withInput  (const String& name, const AudioChannelSet& defaultLayout, bool isActivatedByDefault = true) const;
-        BusesProperties withOutput (const String& name, const AudioChannelSet& defaultLayout, bool isActivatedByDefault = true) const;
+        JUCE_NODISCARD BusesProperties withInput  (const String& name, const AudioChannelSet& defaultLayout, bool isActivatedByDefault = true) const;
+        JUCE_NODISCARD BusesProperties withOutput (const String& name, const AudioChannelSet& defaultLayout, bool isActivatedByDefault = true) const;
     };
 
     /** Callback to query if adding/removing buses currently possible.
@@ -1377,41 +1378,40 @@ protected:
     /** @internal */
     void sendParamChangeMessageToListeners (int parameterIndex, float newValue);
 
-    //==============================================================================
-   #ifndef DOXYGEN
 public:
+   #ifndef DOXYGEN
     // These methods are all deprecated in favour of using AudioProcessorParameter
     // and AudioProcessorParameterGroup
-    JUCE_DEPRECATED (virtual int getNumParameters());
-    JUCE_DEPRECATED (virtual const String getParameterName (int parameterIndex));
-    JUCE_DEPRECATED (virtual String getParameterID (int index));
-    JUCE_DEPRECATED (virtual float getParameter (int parameterIndex));
-    JUCE_DEPRECATED (virtual String getParameterName (int parameterIndex, int maximumStringLength));
-    JUCE_DEPRECATED (virtual const String getParameterText (int parameterIndex));
-    JUCE_DEPRECATED (virtual String getParameterText (int parameterIndex, int maximumStringLength));
-    JUCE_DEPRECATED (virtual int getParameterNumSteps (int parameterIndex));
-    JUCE_DEPRECATED (virtual bool isParameterDiscrete (int parameterIndex) const);
-    JUCE_DEPRECATED (virtual float getParameterDefaultValue (int parameterIndex));
-    JUCE_DEPRECATED (virtual String getParameterLabel (int index) const);
-    JUCE_DEPRECATED (virtual bool isParameterOrientationInverted (int index) const);
-    JUCE_DEPRECATED (virtual void setParameter (int parameterIndex, float newValue));
-    JUCE_DEPRECATED (virtual bool isParameterAutomatable (int parameterIndex) const);
-    JUCE_DEPRECATED (virtual bool isMetaParameter (int parameterIndex) const);
-    JUCE_DEPRECATED (virtual AudioProcessorParameter::Category getParameterCategory (int parameterIndex) const);
-    JUCE_DEPRECATED (void beginParameterChangeGesture (int parameterIndex));
-    JUCE_DEPRECATED (void endParameterChangeGesture (int parameterIndex));
-    JUCE_DEPRECATED (void setParameterNotifyingHost (int parameterIndex, float newValue));
+    [[deprecated]] virtual int getNumParameters();
+    [[deprecated]] virtual const String getParameterName (int parameterIndex);
+    [[deprecated]] virtual String getParameterID (int index);
+    [[deprecated]] virtual float getParameter (int parameterIndex);
+    [[deprecated]] virtual String getParameterName (int parameterIndex, int maximumStringLength);
+    [[deprecated]] virtual const String getParameterText (int parameterIndex);
+    [[deprecated]] virtual String getParameterText (int parameterIndex, int maximumStringLength);
+    [[deprecated]] virtual int getParameterNumSteps (int parameterIndex);
+    [[deprecated]] virtual bool isParameterDiscrete (int parameterIndex) const;
+    [[deprecated]] virtual float getParameterDefaultValue (int parameterIndex);
+    [[deprecated]] virtual String getParameterLabel (int index) const;
+    [[deprecated]] virtual bool isParameterOrientationInverted (int index) const;
+    [[deprecated]] virtual void setParameter (int parameterIndex, float newValue);
+    [[deprecated]] virtual bool isParameterAutomatable (int parameterIndex) const;
+    [[deprecated]] virtual bool isMetaParameter (int parameterIndex) const;
+    [[deprecated]] virtual AudioProcessorParameter::Category getParameterCategory (int parameterIndex) const;
+    [[deprecated]] void beginParameterChangeGesture (int parameterIndex);
+    [[deprecated]] void endParameterChangeGesture (int parameterIndex);
+    [[deprecated]] void setParameterNotifyingHost (int parameterIndex, float newValue);
 
     // These functions are deprecated: your audio processor can inform the host
     // on its bus and channel layouts and names using the AudioChannelSet and various bus classes.
-    JUCE_DEPRECATED_WITH_BODY (int getNumInputChannels()  const noexcept, { return getTotalNumInputChannels(); })
-    JUCE_DEPRECATED_WITH_BODY (int getNumOutputChannels() const noexcept, { return getTotalNumOutputChannels(); })
-    JUCE_DEPRECATED_WITH_BODY (const String getInputSpeakerArrangement()  const noexcept, { return cachedInputSpeakerArrString; })
-    JUCE_DEPRECATED_WITH_BODY (const String getOutputSpeakerArrangement() const noexcept, { return cachedOutputSpeakerArrString; })
-    JUCE_DEPRECATED (virtual const String getInputChannelName  (int channelIndex) const);
-    JUCE_DEPRECATED (virtual const String getOutputChannelName (int channelIndex) const);
-    JUCE_DEPRECATED (virtual bool isInputChannelStereoPair  (int index) const);
-    JUCE_DEPRECATED (virtual bool isOutputChannelStereoPair (int index) const);
+    [[deprecated]] int getNumInputChannels() const noexcept                   { return getTotalNumInputChannels(); }
+    [[deprecated]] int getNumOutputChannels() const noexcept                  { return getTotalNumOutputChannels(); }
+    [[deprecated]] const String getInputSpeakerArrangement() const noexcept   { return cachedInputSpeakerArrString; }
+    [[deprecated]] const String getOutputSpeakerArrangement() const noexcept  { return cachedOutputSpeakerArrString; }
+    [[deprecated]] virtual const String getInputChannelName  (int channelIndex) const;
+    [[deprecated]] virtual const String getOutputChannelName (int channelIndex) const;
+    [[deprecated]] virtual bool isInputChannelStereoPair  (int index) const;
+    [[deprecated]] virtual bool isOutputChannelStereoPair (int index) const;
    #endif
 
 private:
@@ -1466,7 +1466,8 @@ private:
     Component::SafePointer<AudioProcessorEditor> activeEditor;
     double currentSampleRate = 0;
     int blockSize = 0, latencySamples = 0;
-    bool suspended = false, nonRealtime = false;
+    bool suspended = false;
+    std::atomic<bool> nonRealtime { false };
     ProcessingPrecision processingPrecision = singlePrecision;
     CriticalSection callbackLock, listenerLock, activeEditorLock;
 
@@ -1481,16 +1482,22 @@ private:
 
     AudioProcessorParameter* getParamChecked (int) const;
 
-   #if JUCE_DEBUG
-    #if ! JUCE_DISABLE_AUDIOPROCESSOR_BEGIN_END_GESTURE_CHECKING
-     BigInteger changingParams;
-    #endif
-
-    bool textRecursionCheck = false;
-    std::unordered_set<String> paramIDs;
+  #if JUCE_DEBUG
+   #if ! JUCE_DISABLE_AUDIOPROCESSOR_BEGIN_END_GESTURE_CHECKING
+    BigInteger changingParams;
    #endif
 
+    bool textRecursionCheck = false;
+    std::unordered_set<String> paramIDs, groupIDs;
+   #if ! JUCE_DISABLE_CAUTIOUS_PARAMETER_ID_CHECKING
+    std::unordered_set<String> trimmedParamIDs;
+   #endif
+  #endif
+
+    void checkForDuplicateTrimmedParamID (AudioProcessorParameter*);
+    void checkForUnsafeParamID (AudioProcessorParameter*);
     void checkForDuplicateParamID (AudioProcessorParameter*);
+    void checkForDuplicateGroupIDs (const AudioProcessorParameterGroup&);
 
     AudioProcessorListener* getListenerLocked (int) const noexcept;
     void updateSpeakerFormatStrings();
@@ -1503,8 +1510,8 @@ private:
     friend class AudioProcessorParameter;
     friend class LADSPAPluginInstance;
 
-    // This method is no longer used - you can delete it from your AudioProcessor classes.
-    JUCE_DEPRECATED_WITH_BODY (virtual bool silenceInProducesSilenceOut() const, { return false; })
+    [[deprecated ("This method is no longer used - you can delete it from your AudioProcessor classes.")]]
+    virtual bool silenceInProducesSilenceOut() const  { return false; }
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AudioProcessor)
 };

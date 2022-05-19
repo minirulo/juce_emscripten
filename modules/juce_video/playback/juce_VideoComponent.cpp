@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -27,7 +26,7 @@
 namespace juce
 {
 
-#if ! (JUCE_LINUX || JUCE_PROJUCER_LIVE_BUILD)
+#if ! (JUCE_LINUX || JUCE_BSD)
 
 #if JUCE_MAC || JUCE_IOS
  #include "../native/juce_mac_Video.h"
@@ -59,7 +58,7 @@ Result VideoComponent::load (const URL& url)
     return loadInternal (url, false);
 }
 
-void VideoComponent::loadAsync (const URL& url, std::function<void(const URL&, Result)> callback)
+void VideoComponent::loadAsync (const URL& url, std::function<void (const URL&, Result)> callback)
 {
     if (callback == nullptr)
     {
@@ -141,7 +140,7 @@ void VideoComponent::timerCallback()
     resized();
 }
 
-template<class FileOrURL>
+template <class FileOrURL>
 Result VideoComponent::loadInternal (const FileOrURL& fileOrUrl, bool loadAsync)
 {
    #if JUCE_ANDROID || JUCE_IOS
