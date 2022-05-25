@@ -274,7 +274,7 @@ namespace CoreTextTypeLayout
             if (attribStringLen <= wordBegin)
                 continue;
 
-            const auto wordEnd = jmin (attribStringLen, (currentPosition + attr.range.getLength()).getAddress() - beginPtr.getAddress());
+            const auto wordEnd = jmin (attribStringLen, (long)((currentPosition + attr.range.getLength()).getAddress() - beginPtr.getAddress()));
             const auto range = CFRangeMake (wordBegin, wordEnd - wordBegin);
 
             if (auto ctFontRef = getOrCreateFont (attr.font))
