@@ -54,6 +54,7 @@ profile
 **/Builds/CLion/.idea
 **/Builds/MacOSX/**/Index
 **/Builds/MacOSX/**/Intermediates.noindex
+**/Builds/Emscripten/build
 **/doxygen/doc
 **/doxygen/build
 extras/Projucer/JUCECompileEngine.dylib
