@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE examples.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    The code included in this file is provided under the terms of the ISC license
    http://www.isc.org/downloads/software-support-policy/isc-license. Permission
@@ -63,8 +63,6 @@ public:
         addParameter (alpha     = new AudioParameterFloat ("alpha",     "Alpha",     0.0f, 1.0f, 0.8f));
     }
 
-    ~NoiseGate() {}
-
     //==============================================================================
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override
     {
@@ -107,6 +105,8 @@ public:
         }
     }
 
+    using AudioProcessor::processBlock;
+
     //==============================================================================
     AudioProcessorEditor* createEditor() override            { return new GenericAudioProcessorEditor (*this); }
     bool hasEditor() const override                          { return true; }
@@ -117,7 +117,7 @@ public:
     int getNumPrograms() override                            { return 1; }
     int getCurrentProgram() override                         { return 0; }
     void setCurrentProgram (int) override                    {}
-    const String getProgramName (int) override               { return {}; }
+    const String getProgramName (int) override               { return "None"; }
     void changeProgramName (int, const String&) override     {}
     bool isVST2() const noexcept                             { return (wrapperType == wrapperType_VST); }
 

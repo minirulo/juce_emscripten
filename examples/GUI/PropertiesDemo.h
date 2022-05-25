@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE examples.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    The code included in this file is provided under the terms of the ISC license
    http://www.isc.org/downloads/software-support-policy/isc-license. Permission
@@ -61,7 +61,7 @@ public:
     void buttonClicked() override
     {
         ++counter;
-        AlertWindow::showMessageBoxAsync (AlertWindow::InfoIcon, "Action Button Pressed",
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::InfoIcon, "Action Button Pressed",
                                           "Pressing this type of property component can trigger an action such as showing an alert window!");
         refresh();
     }

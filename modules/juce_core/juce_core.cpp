@@ -72,7 +72,7 @@
   #include <netinet/in.h>
  #endif
 
- #if JUCE_WASM
+ #if JUCE_WASM || JUCE_EMSCRIPTEN
   #include <stdio.h>
   #include <sys/types.h>
   #include <sys/socket.h>
@@ -82,7 +82,7 @@
   #include <sys/stat.h>
  #endif
 
- #if JUCE_LINUX || JUCE_BSD
+ #if JUCE_LINUX || JUCE_BSD || JUCE_EMSCRIPTEN
   #include <stdio.h>
   #include <langinfo.h>
   #include <ifaddrs.h>
@@ -102,7 +102,7 @@
  #include <net/if.h>
  #include <sys/ioctl.h>
 
- #if ! (JUCE_ANDROID || JUCE_WASM)
+ #if ! (JUCE_ANDROID || JUCE_WASM || JUCE_EMSCRIPTEN)
   #include <execinfo.h>
  #endif
 #endif
@@ -243,8 +243,13 @@
  #include "native/juce_android_Threads.cpp"
  #include "native/juce_android_RuntimePermissions.cpp"
 
-#elif JUCE_WASM
+#elif JUCE_WASM || JUCE_EMSCRIPTEN
  #include "native/juce_wasm_SystemStats.cpp"
+
+ #include "native/juce_linux_CommonFile.cpp"
+ #include "native/juce_wasm_Files.cpp"
+ // this ia not ok. replace with juce_wasm_Network
+ #include "native/juce_linux_Network.cpp"
 
 #endif
 
@@ -252,11 +257,11 @@
 #include "threads/juce_WaitableEvent.cpp"
 #include "network/juce_URL.cpp"
 
-#if ! JUCE_WASM
+// #if ! (JUCE_WASM || JUCE_EMSCRIPTEN)
  #include "threads/juce_ChildProcess.cpp"
  #include "network/juce_WebInputStream.cpp"
  #include "streams/juce_URLInputSource.cpp"
-#endif
+// #endif
 
 //==============================================================================
 #if JUCE_UNIT_TESTS

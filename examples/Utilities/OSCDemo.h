@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE examples.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    The code included in this file is provided under the terms of the ISC license
    http://www.isc.org/downloads/software-support-policy/isc-license. Permission
@@ -222,7 +222,7 @@ private:
     //==============================================================================
     void showConnectionErrorMessage (const String& messageText)
     {
-        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::WarningIcon,
                                           "Connection error",
                                           messageText,
                                           "OK");
@@ -273,7 +273,7 @@ private:
 
     void showConnectionErrorMessage (const String& messageText)
     {
-        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::WarningIcon,
                                           "Connection error",
                                           messageText,
                                           "OK");
@@ -403,7 +403,7 @@ private:
     //==============================================================================
     void handleConnectError (int failedPort)
     {
-        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::WarningIcon,
                                           "OSC Connection error",
                                           "Error: could not connect to port " + String (failedPort),
                                           "OK");
@@ -412,7 +412,7 @@ private:
     //==============================================================================
     void handleDisconnectError()
     {
-        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::WarningIcon,
                                           "Unknown error",
                                           "An unknown error occurred while trying to disconnect from UDP port.",
                                           "OK");
@@ -421,7 +421,7 @@ private:
     //==============================================================================
     void handleInvalidPortNumberEntered()
     {
-        AlertWindow::showMessageBoxAsync (AlertWindow::WarningIcon,
+        AlertWindow::showMessageBoxAsync (MessageBoxIconType::WarningIcon,
                                           "Invalid port number",
                                           "Error: you have entered an invalid UDP port number.",
                                           "OK");

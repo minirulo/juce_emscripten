@@ -20,8 +20,13 @@
   ==============================================================================
 */
 
+#include <emscripten.h>
+
 namespace juce
 {
+
+std::deque<std::string> debugPrintQueue;
+std::mutex debugPrintQueueMtx;
 
 void Logger::outputDebugString (const String& text)
 {

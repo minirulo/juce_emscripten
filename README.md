@@ -4,6 +4,16 @@ Based on [Dreamtonics/juce_emscripten](https://github.com/Dreamtonics/juce_emscr
 
 Main goal of this fork is updating `juce` to `6.1.6`;
 
+# TODO:
+- Add networking support. 
+   - Create a `juce_core/native/juce_emscripten_Network.cpp` similar to others `juce_core/native/juce_<platform>_Network.cpp` that use emscripten's [fetch api](https://emscripten.org/docs/api_reference/fetch.html);
+   - Alteratively, use the emscripten fetch API in the client code instead of `JUCE::URL::downloadToFile`;
+
+- Replace `JUCE_EMSCRIPTEN` with `JUCE_WASM` (maybe?)
+
+- Proper dark mode detection (See `Desktop::NativeDarkModeChangeDetectorImpl` in `juce_emscripten_Windowing.cpp`)
+
+
 ## Troubleshooting
 
 - Link Error:

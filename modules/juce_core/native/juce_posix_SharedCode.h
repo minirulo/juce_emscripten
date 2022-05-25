@@ -181,7 +181,7 @@ namespace
                  && JUCE_STAT (fileName.toUTF8(), &info) == 0;
     }
 
-   #if ! JUCE_WASM
+   #if ! JUCE_WASM || JUCE_EMSCRIPTEN
     // if this file doesn't exist, find a parent of it that does..
     bool juce_doStatFS (File f, struct statfs& result)
     {
@@ -397,8 +397,10 @@ bool File::deleteFile() const
 
 bool File::moveInternal (const File& dest) const
 {
+   #if ! JUCE_EMSCRIPTEN
     if (rename (fullPath.toUTF8(), dest.getFullPathName().toUTF8()) == 0)
         return true;
+   #endif
 
     if (hasWriteAccess() && copyInternal (dest))
     {
@@ -550,7 +552,7 @@ String SystemStats::getEnvironmentVariable (const String& name, const String& de
 }
 
 //==============================================================================
-#if ! JUCE_WASM
+// #if ! JUCE_WASM
 void MemoryMappedFile::openInternal (const File& file, AccessMode mode, bool exclusive)
 {
     jassert (mode == readOnly || mode == readWrite);
@@ -560,6 +562,12 @@ void MemoryMappedFile::openInternal (const File& file, AccessMode mode, bool exc
         auto pageSize = sysconf (_SC_PAGE_SIZE);
         range.setStart (range.getStart() - (range.getStart() % pageSize));
     }
+
+   #if JUCE_EMSCRIPTEN
+    address = malloc(range.getLength());
+    std::cerr << "MemoryMappedFile is not implemented for emscripten."
+              << std::endl;
+   #else
 
     auto filename = file.getFullPathName().toUTF8();
 
@@ -588,21 +596,30 @@ void MemoryMappedFile::openInternal (const File& file, AccessMode mode, bool exc
         close (fileHandle);
         fileHandle = 0;
     }
+   #endif
 }
 
 MemoryMappedFile::~MemoryMappedFile()
 {
+   #if JUCE_EMSCRIPTEN
+    if (address != nullptr)
+        free (address);
+   #else
     if (address != nullptr)
         munmap (address, (size_t) range.getLength());
 
     if (fileHandle != 0)
         close (fileHandle);
+   #endif
 }
 
 //==============================================================================
 File juce_getExecutableFile();
 File juce_getExecutableFile()
 {
+   #if JUCE_EMSCRIPTEN
+    return File("/");
+   #else
     struct DLAddrReader
     {
         static String getFilename()
@@ -617,6 +634,7 @@ File juce_getExecutableFile()
 
     static String filename = DLAddrReader::getFilename();
     return File::getCurrentWorkingDirectory().getChildFile (filename);
+   #endif
 }
 
 //==============================================================================
@@ -680,7 +698,7 @@ int File::getVolumeSerialNumber() const
     return 0;
 }
 
-#endif
+// #endif
 
 //==============================================================================
 #if ! JUCE_IOS
@@ -1007,7 +1025,7 @@ void JUCE_CALLTYPE Thread::yield()
    calls (the API for these has changed about quite a bit in various Linux
    versions, and a lot of distros seem to ship with obsolete versions)
 */
-#if defined (CPU_ISSET) && ! defined (SUPPORT_AFFINITIES)
+#if (! JUCE_EMSCRIPTEN) && defined (CPU_ISSET) && ! defined (SUPPORT_AFFINITIES)
  #define SUPPORT_AFFINITIES 1
 #endif
 
@@ -1043,7 +1061,7 @@ void JUCE_CALLTYPE Thread::setCurrentThreadAffinityMask (uint32 affinityMask)
 }
 
 //==============================================================================
-#if ! JUCE_WASM
+// #if ! JUCE_WASM
 bool DynamicLibrary::open (const String& name)
 {
     close();
@@ -1069,6 +1087,9 @@ void* DynamicLibrary::getFunction (const String& functionName) noexcept
 #if JUCE_LINUX || JUCE_ANDROID
 static String readPosixConfigFileValue (const char* file, const char* key)
 {
+   #if JUCE_EMSCRIPTEN
+    return {};
+   #else
     StringArray lines;
     File (file).readLines (lines);
 
@@ -1077,6 +1098,7 @@ static String readPosixConfigFileValue (const char* file, const char* key)
             return lines[i].fromFirstOccurrenceOf (":", false, false).trim();
 
     return {};
+   #endif
 }
 #endif
 
@@ -1254,7 +1276,7 @@ bool ChildProcess::start (const StringArray& args, int streamFlags)
     return activeProcess != nullptr;
 }
 
-#endif
+// #endif
 
 //==============================================================================
 struct HighResolutionTimer::Pimpl

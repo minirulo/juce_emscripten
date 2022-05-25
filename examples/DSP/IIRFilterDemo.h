@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE examples.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    The code included in this file is provided under the terms of the ISC license
    http://www.isc.org/downloads/software-support-policy/isc-license. Permission
@@ -83,9 +83,9 @@ struct IIRFilterDemoDSP
 
             switch (typeParam.getCurrentSelectedID())
             {
-                case 1:     *iir.state = *IIR::Coefficients<float>::makeLowPass  (sampleRate, cutoff, qVal); break;
-                case 2:     *iir.state = *IIR::Coefficients<float>::makeHighPass (sampleRate, cutoff, qVal); break;
-                case 3:     *iir.state = *IIR::Coefficients<float>::makeBandPass (sampleRate, cutoff, qVal); break;
+                case 1:     *iir.state = IIR::ArrayCoefficients<float>::makeLowPass  (sampleRate, cutoff, qVal); break;
+                case 2:     *iir.state = IIR::ArrayCoefficients<float>::makeHighPass (sampleRate, cutoff, qVal); break;
+                case 3:     *iir.state = IIR::ArrayCoefficients<float>::makeBandPass (sampleRate, cutoff, qVal); break;
                 default:    break;
             }
         }

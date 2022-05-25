@@ -2,7 +2,7 @@
   ==============================================================================
 
    This file is part of the JUCE examples.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    The code included in this file is provided under the terms of the ISC license
    http://www.isc.org/downloads/software-support-policy/isc-license. Permission
@@ -23,24 +23,26 @@
 
  BEGIN_JUCE_PIP_METADATA
 
- name:             InterAppAudioEffectPlugin
- version:          1.0.0
- vendor:           JUCE
- website:          http://juce.com
- description:      Inter-app audio effect plugin.
+ name:               InterAppAudioEffectPlugin
+ version:            1.0.0
+ vendor:             JUCE
+ website:            http://juce.com
+ description:        Inter-app audio effect plugin.
 
- dependencies:     juce_audio_basics, juce_audio_devices, juce_audio_formats,
-                   juce_audio_plugin_client, juce_audio_processors,
-                   juce_audio_utils, juce_core, juce_data_structures,
-                   juce_events, juce_graphics, juce_gui_basics, juce_gui_extra
- exporters:        xcode_iphone
+ dependencies:       juce_audio_basics, juce_audio_devices, juce_audio_formats,
+                     juce_audio_plugin_client, juce_audio_processors,
+                     juce_audio_utils, juce_core, juce_data_structures,
+                     juce_events, juce_graphics, juce_gui_basics, juce_gui_extra
+ exporters:          xcode_iphone
 
- moduleFlags:      JUCE_STRICT_REFCOUNTEDPOINTER=1
+ moduleFlags:        JUCE_STRICT_REFCOUNTEDPOINTER=1
 
- type:             AudioProcessor
- mainClass:        IAAEffectProcessor
+ type:               AudioProcessor
+ mainClass:          IAAEffectProcessor
 
- useLocalCopy:     1
+ useLocalCopy:       1
+
+ extraPluginFormats: IAA
 
  END_JUCE_PIP_METADATA
 
@@ -77,8 +79,6 @@ public:
         g.fillRoundedRectangle (area.toFloat(), 6.0);
     }
 
-    void resized() override {}
-
     //==============================================================================
     // Called from the audio thread.
     void update (float newLevel)
@@ -112,37 +112,6 @@ private:
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SimpleMeter)
 };
 
-#if JUCE_PROJUCER_LIVE_BUILD
-
-// Animate the meter in the Projucer live build.
-struct MockSimpleMeter  : public Component,
-                          private Timer
-{
-    MockSimpleMeter()
-    {
-        addAndMakeVisible (meter);
-        resized();
-        startTimerHz (100);
-    }
-
-    void paint (Graphics&) override {}
-
-    void resized() override
-    {
-        meter.setBounds (getBounds());
-    }
-
-    void timerCallback() override
-    {
-        meter.update (std::pow (randomNumberGenerator.nextFloat(), 2));
-    }
-
-    SimpleMeter meter;
-    Random randomNumberGenerator;
-};
-
-#endif
-
 //==============================================================================
 // A simple Inter-App Audio plug-in with a gain control and some meters.
 class IAAEffectProcessor  : public AudioProcessor
@@ -156,8 +125,6 @@ public:
                        { std::make_unique<AudioParameterFloat> ("gain", "Gain", NormalisableRange<float> (0.0f, 1.0f), 1.0f / 3.14f) })
     {
     }
-
-    ~IAAEffectProcessor() {}
 
     //==============================================================================
     void prepareToPlay (double, int) override
@@ -177,6 +144,8 @@ public:
 
         return true;
     }
+
+    using AudioProcessor::processBlock;
 
     void processBlock (AudioBuffer<float>& buffer, MidiBuffer&) override
     {
@@ -215,7 +184,7 @@ public:
     bool hasEditor() const override                                    { return true; }
 
     //==============================================================================
-    const String getName() const override                              { return JucePlugin_Name; }
+    const String getName() const override                              { return "InterAppAudioEffectPlugin"; }
     bool acceptsMidi() const override                                  { return false; }
     bool producesMidi() const override                                 { return false; }
     double getTailLengthSeconds() const override                       { return 0.0; }
@@ -224,7 +193,7 @@ public:
     int getNumPrograms() override                                      { return 1; }
     int getCurrentProgram() override                                   { return 0; }
     void setCurrentProgram (int) override                              {}
-    const String getProgramName (int) override                         { return {}; }
+    const String getProgramName (int) override                         { return "None"; }
     void changeProgramName (int, const String&) override               {}
 
     //==============================================================================
@@ -284,11 +253,11 @@ private:
         IAAEffectEditor (IAAEffectProcessor& p,
                          AudioProcessorValueTreeState& vts)
             : AudioProcessorEditor (p),
-              processor (p),
+              iaaEffectProcessor (p),
               parameters (vts)
         {
             // Register for meter value updates.
-            processor.addMeterListener (*this);
+            iaaEffectProcessor.addMeterListener (*this);
 
             gainSlider.setSliderStyle (Slider::SliderStyle::LinearVertical);
             gainSlider.setTextBoxStyle (Slider::TextEntryBoxPosition::TextBoxAbove, false, 60, 20);
@@ -305,12 +274,12 @@ private:
 
             Path rewindShape;
             rewindShape.addRectangle (0.0, 0.0, 5.0, buttonSize);
-            rewindShape.addTriangle (0.0, buttonSize / 2, buttonSize, 0.0, buttonSize, buttonSize);
+            rewindShape.addTriangle (0.0, buttonSize * 0.5f, buttonSize, 0.0, buttonSize, buttonSize);
             rewindButton.setShape (rewindShape, true, true, false);
             rewindButton.onClick = [this]
             {
                 if (transportControllable())
-                    processor.getPlayHead()->transportRewind();
+                    iaaEffectProcessor.getPlayHead()->transportRewind();
             };
             addChildComponent (rewindButton);
 
@@ -320,7 +289,7 @@ private:
             playButton.onClick = [this]
             {
                 if (transportControllable())
-                    processor.getPlayHead()->transportPlay (! lastPosInfo.isPlaying);
+                    iaaEffectProcessor.getPlayHead()->transportPlay (! lastPosInfo.isPlaying);
             };
             addChildComponent (playButton);
 
@@ -330,7 +299,7 @@ private:
             recordButton.onClick = [this]
             {
                 if (transportControllable())
-                    processor.getPlayHead()->transportRecord (! lastPosInfo.isRecording);
+                    iaaEffectProcessor.getPlayHead()->transportRecord (! lastPosInfo.isRecording);
             };
             addChildComponent (recordButton);
 
@@ -351,7 +320,7 @@ private:
             };
             addChildComponent (switchToHostButton);
 
-            auto screenSize = Desktop::getInstance().getDisplays().getMainDisplay().userArea;
+            auto screenSize = Desktop::getInstance().getDisplays().getPrimaryDisplay()->userArea;
             setSize (screenSize.getWidth(), screenSize.getHeight());
 
             resized();
@@ -359,9 +328,9 @@ private:
             startTimerHz (60);
         }
 
-        ~IAAEffectEditor()
+        ~IAAEffectEditor() override
         {
-            processor.removeMeterListener (*this);
+            iaaEffectProcessor.removeMeterListener (*this);
         }
 
         //==============================================================================
@@ -385,19 +354,19 @@ private:
             area.removeFromLeft (20);
             transportText.setBounds (area.removeFromTop (120));
 
-            auto navigationArea = area.removeFromTop (buttonSize);
+            auto navigationArea = area.removeFromTop ((int) buttonSize);
             rewindButton.setTopLeftPosition (navigationArea.getPosition());
-            navigationArea.removeFromLeft (buttonSize + 10);
+            navigationArea.removeFromLeft ((int) buttonSize + 10);
             playButton.setTopLeftPosition (navigationArea.getPosition());
-            navigationArea.removeFromLeft (buttonSize + 10);
+            navigationArea.removeFromLeft ((int) buttonSize + 10);
             recordButton.setTopLeftPosition (navigationArea.getPosition());
 
             area.removeFromTop (30);
 
-            auto appSwitchArea = area.removeFromTop (buttonSize);
+            auto appSwitchArea = area.removeFromTop ((int) buttonSize);
             switchToHostButtonLabel.setBounds (appSwitchArea.removeFromLeft (100));
             appSwitchArea.removeFromLeft (5);
-            switchToHostButton.setBounds (appSwitchArea.removeFromLeft (buttonSize));
+            switchToHostButton.setBounds (appSwitchArea.removeFromLeft ((int) buttonSize));
         }
 
     private:
@@ -411,7 +380,7 @@ private:
         //==============================================================================
         void timerCallback () override
         {
-            auto timeInfoSuccess = processor.updateCurrentTimeInfoFromHost (lastPosInfo);
+            auto timeInfoSuccess = iaaEffectProcessor.updateCurrentTimeInfoFromHost (lastPosInfo);
             transportText.setVisible (timeInfoSuccess);
 
             if (timeInfoSuccess)
@@ -425,8 +394,8 @@ private:
         //==============================================================================
         bool transportControllable()
         {
-            auto playHead = processor.getPlayHead();
-            return playHead != nullptr && playHead->canControlTransport();
+            auto processorPlayHead = iaaEffectProcessor.getPlayHead();
+            return processorPlayHead != nullptr && processorPlayHead->canControlTransport();
         }
 
         //==============================================================================
@@ -481,8 +450,8 @@ private:
 
         void updateTransportButtonsDisplay()
         {
-            auto visible = processor.getPlayHead() != nullptr
-                        && processor.getPlayHead()->canControlTransport();
+            auto visible = iaaEffectProcessor.getPlayHead() != nullptr
+                        && iaaEffectProcessor.getPlayHead()->canControlTransport();
 
             if (rewindButton.isVisible() != visible)
             {
@@ -515,7 +484,7 @@ private:
 
                 if (visible)
                 {
-                    auto icon = hostType.getHostIcon (buttonSize);
+                    auto icon = hostType.getHostIcon ((int) buttonSize);
                     switchToHostButton.setImages(false, true, true,
                                                  icon, 1.0, Colours::transparentBlack,
                                                  icon, 1.0, Colours::transparentBlack,
@@ -524,10 +493,10 @@ private:
             }
         }
 
-        IAAEffectProcessor& processor;
+        IAAEffectProcessor& iaaEffectProcessor;
         AudioProcessorValueTreeState& parameters;
 
-        const int buttonSize = 30;
+        const float buttonSize = 30.0f;
         const Colour defaultButtonColour = Colours::darkgrey;
         ShapeButton rewindButton {"Rewind", defaultButtonColour, defaultButtonColour, defaultButtonColour};
         ShapeButton playButton   {"Play",   defaultButtonColour, defaultButtonColour, defaultButtonColour};
@@ -549,7 +518,6 @@ private:
     //==============================================================================
     AudioProcessorValueTreeState parameters;
     float previousGain = 0.0f;
-    std::array<float, 2> meterValues = { { 0, 0 } };
 
     // This keeps a copy of the last set of timing info that was acquired during an
     // audio callback - the UI component will display this.
