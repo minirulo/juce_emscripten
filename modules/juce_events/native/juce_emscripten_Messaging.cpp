@@ -153,14 +153,14 @@ static void dispatchEvents()
     }
 }
 
-static void dispatchLoop()
+static void dispatchLoop(void* endTime)
 {
-    if (quitReceived.load())
+    if (quitReceived.load() || ((int64)endTime != -1 && Time::currentTimeMillis() >= (int64)endTime))
     {
         emscripten_cancel_main_loop();
-        auto* app = JUCEApplicationBase::getInstance();
-        app->shutdownApp();
-        libraryInitialiser.reset (nullptr);
+        // auto* app = JUCEApplicationBase::getInstance();
+        // app->shutdownApp();
+        // libraryInitialiser.reset (nullptr);
         return;
     }
     
@@ -203,7 +203,7 @@ static void dispatchLoop()
                 logArea.value = logArea.value.substring(n - 1000, n);
         });
     }
-    // DBG("ending dispatch loop cycle");
+    DBG("ending dispatch loop cycle");
 }
 
 bool MessageManager::postMessageToSystemQueue (MessageManager::MessageBase* const message)
@@ -224,8 +224,26 @@ void MessageManager::broadcastMessage (const String&)
 
 void MessageManager::runDispatchLoop()
 {
-    emscripten_set_main_loop(dispatchLoop, 0, 0);
+    // DBG("MessageManager::runDispatchLoop");
+    emscripten_set_main_loop_arg(dispatchLoop, (void*)-1, 0, 0);
 }
+
+#if JUCE_MODAL_LOOPS_PERMITTED
+bool MessageManager::runDispatchLoopUntil (int millisecondsToRunFor)
+{
+    DBG("MessageManager::runDispatchLoopUntil");
+    jassert (isThisTheMessageThread()); // must only be called by the message thread
+
+    auto endTime = Time::currentTimeMillis() + millisecondsToRunFor;
+
+    if (quitMessageReceived.get() == 0)
+    {
+        emscripten_set_main_loop_arg(dispatchLoop, (void*)endTime, 0, 0);
+    }
+
+    return quitMessageReceived.get() == 0;
+}
+#endif
 
 struct QuitCallback : public CallbackMessage
 {
@@ -238,6 +256,7 @@ struct QuitCallback : public CallbackMessage
 
 void MessageManager::stopDispatchLoop()
 {
+    // DBG("MessageManager::stopDispatchLoop");
     (new QuitCallback())->post();
     quitMessagePosted = true;
 }

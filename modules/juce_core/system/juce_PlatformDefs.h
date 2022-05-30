@@ -300,7 +300,7 @@ namespace juce
 #endif
 
 //==============================================================================
-#if (JUCE_ANDROID || JUCE_EMSCRIPTEN) && ! defined (DOXYGEN)
+#if (JUCE_ANDROID) && ! defined (DOXYGEN)
  #define JUCE_MODAL_LOOPS_PERMITTED 0
 #elif ! defined (JUCE_MODAL_LOOPS_PERMITTED)
  /** Some operating environments don't provide a modal loop mechanism, so this flag can be

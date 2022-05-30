@@ -1082,7 +1082,6 @@ String SystemClipboard::getTextFromClipboard()
 }
 
 
-
 // TODO: make async
 void JUCE_CALLTYPE NativeMessageBox::showMessageBoxAsync (
     AlertWindow::AlertIconType iconType,
@@ -1190,6 +1189,20 @@ void JUCE_CALLTYPE NativeMessageBox::showAsync (const MessageBoxOptions& options
 {
     showAsync (options, ModalCallbackFunction::create (callback));
 }
+
+#if JUCE_MODAL_LOOPS_PERMITTED
+void JUCE_CALLTYPE NativeMessageBox::showMessageBox (MessageBoxIconType iconType,
+                                                     const String& title, const String& message,
+                                                     Component* /*associatedComponent*/)
+{
+    AlertWindow::showMessageBox (iconType, title, message);
+}
+
+int JUCE_CALLTYPE NativeMessageBox::show (const MessageBoxOptions& options)
+{
+    return showDialog (options, nullptr, Async::no);
+}
+#endif
 
 
 bool DragAndDropContainer::performExternalDragDropOfFiles (
