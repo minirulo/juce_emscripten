@@ -1504,7 +1504,7 @@ void JUCE_CALLTYPE FloatVectorOperations::disableDenormalisedNumberSupport (bool
   #else
     ignoreUnused (shouldDisable);
 
-   #if ! (defined(JUCE_INTEL) || defined(JUCE_ARM))
+   #if ! (defined(JUCE_INTEL) || defined(JUCE_ARM) || defined(JUCE_EMSCRIPTEN))
     jassertfalse; // No support for disable denormals mode on your platform
    #endif
   #endif

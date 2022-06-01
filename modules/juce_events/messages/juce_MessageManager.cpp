@@ -245,6 +245,7 @@ void MessageManager::setCurrentThreadAsMessageThread()
 bool MessageManager::currentThreadHasLockedMessageManager() const noexcept
 {
     auto thisThread = Thread::getCurrentThreadId();
+    // DBG("currentThreadHasLockedMessageManager thisThread: " << (long int)thisThread << " messageThreadId: " << (long int)messageThreadId << " threadWithLock: " << (long int)threadWithLock.get());
     return thisThread == messageThreadId || thisThread == threadWithLock.get();
 }
 

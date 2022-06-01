@@ -153,9 +153,13 @@ static void dispatchEvents()
     }
 }
 
-static void dispatchLoop(void* endTime)
+static void dispatchLoop(void* endTimePtr)
 {
-    if (quitReceived.load() || ((int64)endTime != -1 && Time::currentTimeMillis() >= (int64)endTime))
+    int64 endTime = *((int64*)endTimePtr);
+    // DBG("new dispatch loop cycle " << Time::currentTimeMillis() << "/" << endTime);
+
+
+    if (quitReceived.load() || ((int64)endTime != -1 && Time::currentTimeMillis() >= endTime))
     {
         emscripten_cancel_main_loop();
         // auto* app = JUCEApplicationBase::getInstance();
@@ -164,7 +168,7 @@ static void dispatchLoop(void* endTime)
         return;
     }
     
-    // DBG("new dispatch loop cycle");
+    
     timeDispatchBeginMS = Time::getMillisecondCounterHiRes();
 
     dispatchEvents();
@@ -203,7 +207,7 @@ static void dispatchLoop(void* endTime)
                 logArea.value = logArea.value.substring(n - 1000, n);
         });
     }
-    DBG("ending dispatch loop cycle");
+    // DBG("ending dispatch loop cycle");
 }
 
 bool MessageManager::postMessageToSystemQueue (MessageManager::MessageBase* const message)
@@ -222,10 +226,12 @@ void MessageManager::broadcastMessage (const String&)
 {
 }
 
+auto dispatchLoopArg = std::make_unique<int64>(-1);
+
 void MessageManager::runDispatchLoop()
 {
-    // DBG("MessageManager::runDispatchLoop");
-    emscripten_set_main_loop_arg(dispatchLoop, (void*)-1, 0, 0);
+    DBG("MessageManager::runDispatchLoop");
+    emscripten_set_main_loop_arg(dispatchLoop, (void*)dispatchLoopArg.get(), 0, 0);
 }
 
 #if JUCE_MODAL_LOOPS_PERMITTED
@@ -235,6 +241,8 @@ bool MessageManager::runDispatchLoopUntil (int millisecondsToRunFor)
     jassert (isThisTheMessageThread()); // must only be called by the message thread
 
     auto endTime = Time::currentTimeMillis() + millisecondsToRunFor;
+
+    *dispatchLoopArg = endTime;
 
     if (quitMessageReceived.get() == 0)
     {
