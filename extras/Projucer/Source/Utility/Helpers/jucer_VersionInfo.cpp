@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -26,6 +25,13 @@
 
 #include "../../Application/jucer_Headers.h"
 #include "jucer_VersionInfo.h"
+
+
+VersionInfo::VersionInfo (String versionIn, String releaseNotesIn, std::vector<Asset> assetsIn)
+    : versionString (std::move (versionIn)),
+      releaseNotes (std::move (releaseNotesIn)),
+      assets (std::move (assetsIn))
+{}
 
 std::unique_ptr<VersionInfo> VersionInfo::fetchFromUpdateServer (const String& versionString)
 {
@@ -42,9 +48,12 @@ std::unique_ptr<InputStream> VersionInfo::createInputStreamForAsset (const Asset
     URL downloadUrl (asset.url);
     StringPairArray responseHeaders;
 
-    return std::unique_ptr<InputStream> (downloadUrl.createInputStream (false, nullptr, nullptr,
-                                                                        "Accept: application/octet-stream",
-                                                                        0, &responseHeaders, &statusCode, 1));
+    return std::unique_ptr<InputStream> (downloadUrl.createInputStream (URL::InputStreamOptions (URL::ParameterHandling::inAddress)
+                                                                          .withExtraHeaders ("Accept: application/octet-stream")
+                                                                          .withConnectionTimeoutMs (5000)
+                                                                          .withResponseHeaders (&responseHeaders)
+                                                                          .withStatusCode (&statusCode)
+                                                                          .withNumRedirectsToFollow (1)));
 }
 
 bool VersionInfo::isNewerVersionThanCurrent()
@@ -54,7 +63,7 @@ bool VersionInfo::isNewerVersionThanCurrent()
     auto currentTokens = StringArray::fromTokens (ProjectInfo::versionString, ".", {});
     auto thisTokens    = StringArray::fromTokens (versionString, ".", {});
 
-    jassert (thisTokens.size() == 3 && thisTokens.size() == 3);
+    jassert (thisTokens.size() == 3);
 
     if (currentTokens[0].getIntValue() == thisTokens[0].getIntValue())
     {
@@ -69,8 +78,10 @@ bool VersionInfo::isNewerVersionThanCurrent()
 
 std::unique_ptr<VersionInfo> VersionInfo::fetch (const String& endpoint)
 {
-    URL latestVersionURL ("https://api.github.com/repos/WeAreROLI/JUCE/releases/" + endpoint);
-    std::unique_ptr<InputStream> inStream (latestVersionURL.createInputStream (false));
+    URL latestVersionURL ("https://api.github.com/repos/juce-framework/JUCE/releases/" + endpoint);
+
+    std::unique_ptr<InputStream> inStream (latestVersionURL.createInputStream (URL::InputStreamOptions (URL::ParameterHandling::inAddress)
+                                                                                 .withConnectionTimeoutMs (5000)));
 
     if (inStream == nullptr)
         return nullptr;
@@ -111,5 +122,5 @@ std::unique_ptr<VersionInfo> VersionInfo::fetch (const String& endpoint)
         }
     }
 
-    return std::unique_ptr<VersionInfo> (new VersionInfo ({ versionString, releaseNotes, std::move (parsedAssets) }));
+    return std::unique_ptr<VersionInfo> (new VersionInfo { versionString, releaseNotes, std::move (parsedAssets) });
 }

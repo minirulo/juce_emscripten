@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -27,6 +26,19 @@
 #pragma once
 
 #include "../Plugins/IOConfigurationWindow.h"
+
+inline String getFormatSuffix (const AudioProcessor* plugin)
+{
+    const auto format = [plugin]()
+    {
+        if (auto* instance = dynamic_cast<const AudioPluginInstance*> (plugin))
+            return instance->getPluginDescription().pluginFormatName;
+
+        return String();
+    }();
+
+    return format.isNotEmpty() ? (" (" + format + ")") : format;
+}
 
 class PluginGraph;
 
@@ -49,6 +61,12 @@ public:
             p->addListener (this);
 
         log.add ("Parameter debug log started");
+    }
+
+    ~PluginDebugWindow() override
+    {
+        for (auto* p : audioProc.getParameters())
+            p->removeListener (this);
     }
 
     void parameterValueChanged (int parameterIndex, float newValue) override
@@ -111,8 +129,8 @@ private:
         list.scrollToEnsureRowIsOnscreen (log.size() - 1);
     }
 
-    JUCE_CONSTEXPR static const int maxLogSize = 300;
-    JUCE_CONSTEXPR static const int logSizeTrimThreshold = 400;
+    constexpr static const int maxLogSize = 300;
+    constexpr static const int logSizeTrimThreshold = 400;
 
     ListBox list { "Log", this };
 
@@ -141,7 +159,7 @@ public:
     };
 
     PluginWindow (AudioProcessorGraph::Node* n, Type t, OwnedArray<PluginWindow>& windowList)
-       : DocumentWindow (n->getProcessor()->getName(),
+       : DocumentWindow (n->getProcessor()->getName() + getFormatSuffix (n->getProcessor()),
                          LookAndFeel::getDefaultLookAndFeel().findColour (ResizableWindow::backgroundColourId),
                          DocumentWindow::minimiseButton | DocumentWindow::closeButton),
          activeWindowList (windowList),
@@ -150,7 +168,10 @@ public:
         setSize (400, 300);
 
         if (auto* ui = createProcessorEditor (*node->getProcessor(), type))
+        {
             setContentOwned (ui, true);
+            setResizable (ui->isResizable(), false);
+        }
 
        #if JUCE_IOS || JUCE_ANDROID
         auto screenBounds = Desktop::getInstance().getDisplays().getTotalBounds (true).toFloat();
@@ -195,6 +216,16 @@ public:
     const AudioProcessorGraph::Node::Ptr node;
     const Type type;
 
+    BorderSize<int> getBorderThickness() override
+    {
+       #if JUCE_IOS || JUCE_ANDROID
+        const int border = 10;
+        return { border, border, border, border };
+       #else
+        return DocumentWindow::getBorderThickness();
+       #endif
+    }
+
 private:
     float getDesktopScaleFactor() const override     { return 1.0f; }
 
@@ -203,8 +234,9 @@ private:
     {
         if (type == PluginWindow::Type::normal)
         {
-            if (auto* ui = processor.createEditorIfNeeded())
-                return ui;
+            if (processor.hasEditor())
+                if (auto* ui = processor.createEditorIfNeeded())
+                    return ui;
 
             type = PluginWindow::Type::generic;
         }
@@ -227,6 +259,7 @@ private:
             case Type::programs:   return "Programs";
             case Type::audioIO:    return "IO";
             case Type::debug:      return "Debug";
+            case Type::numTypes:
             default:               return {};
         }
     }
@@ -287,7 +320,7 @@ private:
             }
 
             void refresh() override {}
-            void audioProcessorChanged (AudioProcessor*) override {}
+            void audioProcessorChanged (AudioProcessor*, const ChangeDetails&) override {}
             void audioProcessorParameterChanged (AudioProcessor*, int, float) override {}
 
             AudioProcessor& owner;

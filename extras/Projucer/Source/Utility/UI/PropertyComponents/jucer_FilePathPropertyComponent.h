@@ -2,17 +2,16 @@
   ==============================================================================
 
    This file is part of the JUCE library.
-   Copyright (c) 2017 - ROLI Ltd.
+   Copyright (c) 2020 - Raw Material Software Limited
 
    JUCE is an open source library subject to commercial or open-source
    licensing.
 
-   By using JUCE, you agree to the terms of both the JUCE 5 End-User License
-   Agreement and JUCE 5 Privacy Policy (both updated and effective as of the
-   27th April 2017).
+   By using JUCE, you agree to the terms of both the JUCE 6 End-User License
+   Agreement and JUCE Privacy Policy (both effective as of the 16th June 2020).
 
-   End User License Agreement: www.juce.com/juce-5-licence
-   Privacy Policy: www.juce.com/juce-5-privacy-policy
+   End User License Agreement: www.juce.com/juce-6-licence
+   Privacy Policy: www.juce.com/juce-privacy-policy
 
    Or: You may also use this code under the terms of the GPL v3 (see
    www.gnu.org/licenses).
@@ -35,7 +34,7 @@
 */
 class FilePathPropertyComponent    : public PropertyComponent,
                                      public FileDragAndDropTarget,
-                                     private Value::Listener
+                                     protected Value::Listener
 {
 public:
     FilePathPropertyComponent (Value valueToControl, const String& propertyName, bool isDir, bool thisOS = true,
@@ -49,8 +48,12 @@ public:
     }
 
     /** Displays a default value when no value is specified by the user. */
-    FilePathPropertyComponent (ValueWithDefault& valueToControl, const String& propertyName, bool isDir, bool thisOS = true,
-                               const String& wildcardsToUse = "*", const File& relativeRoot = File())
+    FilePathPropertyComponent (ValueTreePropertyWithDefault valueToControl,
+                               const String& propertyName,
+                               bool isDir,
+                               bool thisOS = true,
+                               const String& wildcardsToUse = "*",
+                               const File& relativeRoot = File())
        : PropertyComponent (propertyName),
          text (valueToControl, propertyName, 1024, false),
          isDirectory (isDir), isThisOS (thisOS), wildcards (wildcardsToUse), root (relativeRoot)
@@ -93,6 +96,12 @@ public:
         repaint();
     }
 
+protected:
+    void valueChanged (Value&) override
+    {
+        updateEditorColour();
+    }
+
 private:
     //==============================================================================
     void init()
@@ -129,17 +138,29 @@ private:
 
         if (isDirectory)
         {
-            FileChooser chooser ("Select directory", currentFile);
+            chooser = std::make_unique<FileChooser> ("Select directory", currentFile);
+            auto chooserFlags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectDirectories;
 
-            if (chooser.browseForDirectory())
-                setTo (chooser.getResult());
+            chooser->launchAsync (chooserFlags, [this] (const FileChooser& fc)
+            {
+                if (fc.getResult() == File{})
+                    return;
+
+                setTo (fc.getResult());
+            });
         }
         else
         {
-            FileChooser chooser ("Select file", currentFile, wildcards);
+            chooser = std::make_unique<FileChooser> ("Select file", currentFile, wildcards);
+            auto chooserFlags = FileBrowserComponent::openMode | FileBrowserComponent::canSelectFiles;
 
-            if (chooser.browseForFileToOpen())
-                setTo (chooser.getResult());
+            chooser->launchAsync (chooserFlags, [this] (const FileChooser& fc)
+            {
+                if (fc.getResult() == File{})
+                    return;
+
+                setTo (fc.getResult());
+            });
         }
     }
 
@@ -166,11 +187,6 @@ private:
         }
     }
 
-    void valueChanged (Value&) override
-    {
-        updateEditorColour();
-    }
-
     void lookAndFeelChanged() override
     {
         browseButton.setColour (TextButton::buttonColourId, findColour (secondaryButtonBackgroundColourId));
@@ -189,6 +205,45 @@ private:
     String wildcards;
     File root;
 
+    std::unique_ptr<FileChooser> chooser;
+
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FilePathPropertyComponent)
+};
+
+//==============================================================================
+class FilePathPropertyComponentWithEnablement  : public FilePathPropertyComponent
+{
+public:
+    FilePathPropertyComponentWithEnablement (const ValueTreePropertyWithDefault& valueToControl,
+                                             ValueTreePropertyWithDefault valueToListenTo,
+                                             const String& propertyName,
+                                             bool isDir,
+                                             bool thisOS = true,
+                                             const String& wildcardsToUse = "*",
+                                             const File& relativeRoot = File())
+        : FilePathPropertyComponent (valueToControl,
+                                     propertyName,
+                                     isDir,
+                                     thisOS,
+                                     wildcardsToUse,
+                                     relativeRoot),
+          propertyWithDefault (valueToListenTo),
+          value (valueToListenTo.getPropertyAsValue())
+    {
+        value.addListener (this);
+        valueChanged (value);
+    }
+
+    ~FilePathPropertyComponentWithEnablement() override    { value.removeListener (this); }
+
+private:
+    void valueChanged (Value& v) override
+    {
+        FilePathPropertyComponent::valueChanged (v);
+        setEnabled (propertyWithDefault.get());
+    }
+
+    ValueTreePropertyWithDefault propertyWithDefault;
+    Value value;
 };
