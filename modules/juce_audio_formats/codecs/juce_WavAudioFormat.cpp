@@ -1746,6 +1746,7 @@ AudioFormatReader* WavAudioFormat::createReaderFor (InputStream* sourceStream, b
     return nullptr;
 }
 
+#if !JUCE_EMSCRIPTEN
 MemoryMappedAudioFormatReader* WavAudioFormat::createMemoryMappedReader (const File& file)
 {
     return createMemoryMappedReader (file.createInputStream().release());
@@ -1763,6 +1764,7 @@ MemoryMappedAudioFormatReader* WavAudioFormat::createMemoryMappedReader (FileInp
 
     return nullptr;
 }
+#endif
 
 AudioFormatWriter* WavAudioFormat::createWriterFor (OutputStream* out, double sampleRate,
                                                     unsigned int numChannels, int bitsPerSample,

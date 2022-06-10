@@ -197,8 +197,10 @@ public:
     AudioFormatReader* createReaderFor (InputStream* sourceStream,
                                         bool deleteStreamIfOpeningFails) override;
 
+#if !JUCE_EMSCRIPTEN
     MemoryMappedAudioFormatReader* createMemoryMappedReader (const File&)      override;
     MemoryMappedAudioFormatReader* createMemoryMappedReader (FileInputStream*) override;
+#endif
 
     AudioFormatWriter* createWriterFor (OutputStream* streamToWriteTo,
                                         double sampleRateToUse,
