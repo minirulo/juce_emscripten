@@ -707,7 +707,7 @@ class EmscriptenComponentPeer : public ComponentPeer,
                 var imageData = ctx.createImageData(width, height);
                 imageData.data.set(buffer);
                 ctx.putImageData(imageData, $4, $5);
-                delete buffer;
+                // delete buffer;
             }, id.toRawUTF8(),
                pixels, bitmapData.width, bitmapData.height,
                area.getX(), area.getY());
